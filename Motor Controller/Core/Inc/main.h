@@ -59,6 +59,24 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define Voltage_Sense_Pin GPIO_PIN_0
+#define Voltage_Sense_GPIO_Port GPIOA
+#define Current_Sense_Pin GPIO_PIN_1
+#define Current_Sense_GPIO_Port GPIOA
+#define Setting_Pw_Frq_Pin GPIO_PIN_2
+#define Setting_Pw_Frq_GPIO_Port GPIOA
+#define Setting_Delay_Pin GPIO_PIN_3
+#define Setting_Delay_GPIO_Port GPIOA
+#define High_Side_Pole_Pin GPIO_PIN_0
+#define High_Side_Pole_GPIO_Port GPIOB
+#define High_Side_Pole_EXTI_IRQn EXTI0_IRQn
+#define Low_Side_Pole_Pin GPIO_PIN_1
+#define Low_Side_Pole_GPIO_Port GPIOB
+#define Low_Side_Pole_EXTI_IRQn EXTI1_IRQn
+#define High_Side_Pole_Out_Pin GPIO_PIN_8
+#define High_Side_Pole_Out_GPIO_Port GPIOC
+#define Low_Side_Pole_Out_Pin GPIO_PIN_6
+#define Low_Side_Pole_Out_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
