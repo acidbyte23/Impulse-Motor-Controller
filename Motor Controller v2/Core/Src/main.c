@@ -540,7 +540,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void motorCo
+void motorControl(){
 	if((highPulseState == 1) && (TIM5->CNT >= pulseDelay)){
 		incrementalPulseDone = 0;
 		highPulseState = 2;
