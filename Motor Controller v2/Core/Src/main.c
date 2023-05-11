@@ -166,20 +166,30 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		// handle the motor enable/disable function
 		motorEnableSafe();
 		
+		// check if the motor is enabled
 		if(motorEnable == 1){
+			
+			// handle the motor pulses
 			pulseControl();		
+			// handle motor cold start
 			motorStartup();
 			
+			// check if pid is enabled
 			if((pidEnable == 1)){
+				// do PID calculations
 				PIDcalculations();
 			}
 			
+			// ramp the motor rpm setpoint
 			RPMmotorRamp();
 		}
 		
+		// do motor RPM calculations and motor run parameters
 		motorCalculations();
+		// determine and control motor state
 		motorRunningState();
 	}
   /* USER CODE END 3 */
