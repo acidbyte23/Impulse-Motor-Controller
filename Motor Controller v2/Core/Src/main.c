@@ -73,6 +73,9 @@ float rpmSetPulsePrev;
 float rpmActSetPulse = 500;
 float rpmPulseIncremental;
 float rpmPulseAttackTime = 100;
+float minimumMotorFreq = 2.0;
+
+uint32_t startupFrequency = 500000;
 
 float error;
 float cumError;
@@ -164,13 +167,21 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		motorEnableSafe();
-		pulseControl();		
-		motorStartup();
-		PIDcalculations();
+		
+		if(motorEnable == 1){
+			pulseControl();		
+			motorStartup();
+			
+			if((pidEnable == 1)){
+				PIDcalculations();
+			}
+			
+			RPMmotorRamp();
+		}
+		
 		motorCalculations();
-		RPMmotorRamp();
 		motorRunningState();
-  }
+	}
   /* USER CODE END 3 */
 }
 
@@ -541,22 +552,25 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void pulseControl(){
+	// handle the highside pulse
 	if((highPulseState == 1) && (TIM5->CNT >= pulseDelay)){
-		incrementalPulseDone = 0;
-		highPulseState = 2;
-		TIM3->ARR = pulseWidth;
-		__HAL_TIM_ENABLE(&htim3);
+		incrementalPulseDone = 0; // reset incremental
+		highPulseState = 2; // set state int
+		TIM3->ARR = pulseWidth; // set pulsewidth
+		__HAL_TIM_ENABLE(&htim3); // enable one shot pwm timer
 	}
 	
+	// handle the lowside pulse
 	if((lowPulseState == 1) && (TIM5->CNT >= (pulseDelay + halfTime))){
-		incrementalPulseDone = 0;
-		lowPulseState = 2;
-		TIM4->ARR = pulseWidth;
-		__HAL_TIM_ENABLE(&htim4);
+		incrementalPulseDone = 0; // reset incremental bit
+		lowPulseState = 2; // set state int
+		TIM4->ARR = pulseWidth; // set pulsewidth
+		__HAL_TIM_ENABLE(&htim4); // enable one shot pwm timer
 	}
 }
 		
 void motorEnableSafe(void){
+	// enable/disable the motor on a rising/falling trigger
 	if((motorEnable == 1) && (prevMotorEnable == 0)){
 		GPIOC->BSRR |= (1<<6) <<16;
 		pulseWidth = 500;
@@ -572,24 +586,9 @@ void motorEnableSafe(void){
 		cycleTime = 0;
 		halfTime = 0;
 	}
-}
-
-void PIDcalculations(void){	
-	if((pidEnable == 1) && (motorEnable == 1) && (motorRunning == 1) && ((highPulseState == 2) || (lowPulseState == 2))){
-		error = (rpmActSetPulse - rpmPulse); // determine error
-		cumError += error; // compute integral
-		rateError = (error - lastError);
-		multiplierPid = kp*error + ki*cumError + kd*rateError;   
-		lastError = error; 
 	
-		if(multiplierPid > PID_MAX){
-			multiplierPid = PID_MAX;
-		}
-		else if(multiplierPid < PID_MIN){
-			multiplierPid = PID_MIN;
-		}
-	}
-	else if((pidEnable == 0) || (motorEnable == 0)){
+	// if the motor is off reset all variable of the PID
+	if((pidEnable == 0) || (motorEnable == 0)){
 		error = 0.0;
 		cumError = 0.0;
 		rateError = 0.0;
@@ -598,11 +597,31 @@ void PIDcalculations(void){
 	}
 }
 
+void PIDcalculations(void){	
+	if((motorRunning == 1) && ((highPulseState == 2) || (lowPulseState == 2))){
+		error = (rpmActSetPulse - rpmPulse); // determine Proportional
+		cumError += error; // determine Integral
+		rateError = (error - lastError); // determine Derivative
+		multiplierPid = kp*error + ki*cumError + kd*rateError; // sum them together 
+		lastError = error;  // record error for next cycle
+	
+		// catch duty cycle overflow
+		if(multiplierPid > PID_MAX){
+			multiplierPid = PID_MAX;
+		}
+		else if(multiplierPid < PID_MIN){
+			multiplierPid = PID_MIN;
+		}
+	}
+}
+
 void RPMmotorRamp(void){
+	// setpoint change
 	if((rpmSetPulse != rpmSetPulsePrev)){
 		rpmSetPulsePrev = rpmSetPulse;
 		motorAtSpeed = 0;
 			
+		// calculate new incremental
 		if(rpmSetPulse > rpmActSetPulse){
 			rpmPulseIncremental = (rpmSetPulse - rpmActSetPulse) / rpmPulseAttackTime;
 		}
@@ -611,8 +630,10 @@ void RPMmotorRamp(void){
 		}
 	}
 		
-	if((TIM5->CNT >= 500) && (incrementalPulseDone == 0)){
-		incrementalPulseDone = 1;
+	// do the actual rampup to the setpoint
+	if((TIM5->CNT >= 10) && (incrementalPulseDone == 0)){
+		incrementalPulseDone = 1; // set the done bit for one pulse mode
+		// ramp up/down for the rpm setpoint
 		if((rpmSetPulse > (rpmActSetPulse * 1.02)) && (motorAtSpeed == 0)){
 			rpmActSetPulse += rpmPulseIncremental;
 		}
@@ -627,14 +648,17 @@ void RPMmotorRamp(void){
 }
 
 void motorStartup(void){
+	// check if the motor is not running running yet
 	if((motorRunning == 0)){
-		if((TIM5->CNT > 1000) && (motorEnable == 1)){
-			cycleTime = 400000;
+		// set startup pulses
+		if((TIM5->CNT > 1)){
+			cycleTime = startupFrequency;
 			highPulseState = 1;
-			halfTime = 200000;
+			halfTime = startupFrequency / 2.0;
 			lowPulseState = 1;
 		}
 		
+		// reset timer 
 		if(TIM5->CNT > 400000){
 			TIM5->CNT = 0;
 		}
@@ -642,10 +666,11 @@ void motorStartup(void){
 }
 
 void motorRunningState(void){
-	if((hertzPulse > 2.0) && (motorEnable == 1)){
+	// figure if the motor is above minimum hertz
+	if((hertzPulse > minimumMotorFreq)){
 		motorRunning = 1;
 	}
-	else if((hertzPulse > 2.0) && (motorEnable == 1) && (pidEnable == 1)){
+	else if((hertzPulse > minimumMotorFreq) && (pidEnable == 1)){
 		motorRunning = 1;
 		pulseWidth = 1000;
 	}
@@ -653,6 +678,7 @@ void motorRunningState(void){
 		motorRunning = 0;
 	}
 	
+	// reset pulse states
 	if(highPulseState == 2){
 		highPulseState = 0;
 	}
@@ -660,29 +686,27 @@ void motorRunningState(void){
 		lowPulseState = 0;
 	}
 	
+	// if motor disabled reset ramp setpoint
 	if(motorEnable == 0){
 		rpmActSetPulse = 0;
 	}
 }
 
 void motorCalculations(void){
-	if((highPulseState == 0) && (lowPulseState == 0)){
-		if(cycleTime > 0){
-			if(TIM5->CNT >= 2000000){
-				hertzPulse = 0.0;
-			}
-			else{
-				hertzPulse = (1000000.0 / (float) cycleTime);
-			}
-			rpmPulse = (hertzPulse / uniPolePass)  * 60.0;
-			pulseDelay = ((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint);
-			pulseWidth = (uint32_t) (((((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid);
-			if(pulseWidth > 65535){
+	if(((highPulseState == 0) && (lowPulseState == 0)) || ((highPulseState == 2) && (lowPulseState == 0)) || ((highPulseState == 0) && (lowPulseState == 2))){ // if no pulse is running
+		if(cycleTime > 0){ // catch divide by 0
+			hertzPulse = (1000000.0 / (float) cycleTime); // calculate motor coil hertz
+			rpmPulse = (hertzPulse / uniPolePass)  * 60.0; // calculate rpm
+			pulseDelay = ((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint); // calculate pulse time delay
+			pulseWidth = (uint32_t) (((((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid); // calculate pulse width
+			
+			if(pulseWidth > 65535){ // catch overflow
 				pulseWidth = 65534;
 			}
 		}
-		else{
+		else{ // set pulse hz and rpm to 0
 			rpmPulse = 0.0;
+			hertzPulse = 0.0;
 		}			
 	}
 }
