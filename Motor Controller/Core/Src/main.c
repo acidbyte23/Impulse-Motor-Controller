@@ -51,19 +51,44 @@ TIM_HandleTypeDef htim5;
 uint32_t cycleTime;
 uint32_t halfTime;
 
-uint32_t pulseDelay = 100;
+uint32_t pulseDelay = 0;
 uint32_t pulseWidth = 1000;
 
 int highPulseState;
 int lowPulseState;
 
-float uniPolePass = 3;
+float uniPolePass = 3.0;
 float rpmPulse;
+float hertzPulse;
 
-uint32_t delaySetpoint = 1000;
+uint32_t delaySetpoint = 0;
 uint32_t widthSetpoint = 1000;
 
+int motorEnable;
+int motorRunning;
+int prevMotorEnable;
 
+float rpmSetPulse = 500;
+float rpmSetPulsePrev;
+float rpmActSetPulse = 500;
+float rpmPulseIncremental;
+float rpmPulseAttackTime = 100;
+
+float error;
+float cumError;
+float rateError;
+float lastError; 
+float multiplierPid;
+float kp = 3.0;
+float ki = 0.00045;
+float kd = 0.01;  
+float PID_MIN = 1.0;
+float PID_MAX = 1000.0;
+
+int incrementalPulseDone;
+int motorAtSpeed;
+
+int pidEnable = 1;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -119,6 +144,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 	HAL_TIM_Base_Start(&htim5);
+		GPIOC->BSRR |= (1<<6);
+		//GPIOC->BSRR |= (1<<6) <<16;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -128,23 +155,93 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		if((highPulseState == 1) && (TIM5->CNT >= pulseDelay)){
+		
+		if((motorEnable == 1) && (prevMotorEnable == 0)){
+			GPIOC->BSRR |= (1<<6) <<16;
+			pulseWidth = 500;
+			TIM5->CNT = 0;
+			prevMotorEnable = 1;
+			rpmActSetPulse = rpmSetPulse / 3;
+		}
+		else if((motorEnable == 0) && (prevMotorEnable == 1)){
+			GPIOC->BSRR |= (1<<6);
+			prevMotorEnable = 0;
+			lowPulseState = 0;
 			highPulseState = 0;
+			cycleTime = 0;
+			halfTime = 0;
+		}
+		
+		if(motorEnable == 0){
+			rpmActSetPulse = 0;
+		}
+		
+		if((highPulseState == 1) && (TIM5->CNT >= pulseDelay)){
+			incrementalPulseDone = 0;
+			highPulseState = 2;
 			TIM3->ARR = pulseWidth;
 			__HAL_TIM_ENABLE(&htim3);
 		}
 		
 		if((lowPulseState == 1) && (TIM5->CNT >= (pulseDelay + halfTime))){
-			lowPulseState = 0;
+			lowPulseState = 2;
 			TIM4->ARR = pulseWidth;
 			__HAL_TIM_ENABLE(&htim4);
 		}
 		
+		if((motorRunning == 0)){
+			if((TIM5->CNT > 1000) && (motorEnable == 1)){
+				cycleTime = 400000;
+				highPulseState = 1;
+				halfTime = 200000;
+				lowPulseState = 1;
+			}
+			
+			if(TIM5->CNT > 400000){
+				TIM5->CNT = 0;
+			}
+		}
+		
+		if((hertzPulse > 2.0) && (motorEnable == 1)){
+			motorRunning = 1;
+			pulseWidth = 1000;
+		}
+		else{
+			motorRunning = 0;
+		}
+		
+		if((pidEnable == 1) && (motorEnable == 1) && (motorRunning == 1) && ((highPulseState == 2) || (lowPulseState == 2))){
+			error = (rpmActSetPulse - rpmPulse); // determine error
+			cumError += error; // compute integral
+			rateError = (error - lastError);
+			multiplierPid = kp*error + ki*cumError + kd*rateError;   
+			lastError = error; 
+		
+			if(multiplierPid > PID_MAX){
+				multiplierPid = PID_MAX;
+			}
+			else if(multiplierPid < PID_MIN){
+				multiplierPid = PID_MIN;
+			}
+		}
+		else if((pidEnable == 0) || (motorEnable == 0)){
+			error = 0.0;
+			cumError = 0.0;
+			rateError = 0.0;
+			lastError = 0.0;
+			multiplierPid = 800.0;
+		}
 		if((highPulseState == 0) && (lowPulseState == 0)){
 			if(cycleTime > 0){
-				rpmPulse = (1000000.0 / ((float) cycleTime * (float) uniPolePass));
+				if(TIM5->CNT >= 2000000){
+					hertzPulse = 0.0;
+				}
+				else{
+					hertzPulse = (1000000.0 / (float) cycleTime);
+				}
+				rpmPulse = (hertzPulse / uniPolePass)  * 60.0;
 				pulseDelay = ((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint);
-				pulseWidth = ((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint);
+				pulseWidth = (uint32_t) (((((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid);
 				if(pulseWidth > 65535){
 					pulseWidth = 65534;
 				}
@@ -152,7 +249,55 @@ int main(void)
 			else{
 				rpmPulse = 0.0;
 			}
+			
 		}
+		if((rpmSetPulse != rpmSetPulsePrev)){
+			rpmSetPulsePrev = rpmSetPulse;
+			motorAtSpeed = 0;
+			
+			if(rpmSetPulse > rpmActSetPulse){
+				rpmPulseIncremental = (rpmSetPulse - rpmActSetPulse) / rpmPulseAttackTime;
+			}
+			else if(rpmSetPulse < rpmActSetPulse){
+				rpmPulseIncremental = (rpmActSetPulse - rpmSetPulse) / rpmPulseAttackTime;
+			}
+		}
+		
+		if((TIM5->CNT >= 500) && (incrementalPulseDone == 0)){
+			incrementalPulseDone = 1;
+			if((rpmSetPulse > (rpmActSetPulse * 1.02)) && (motorAtSpeed == 0)){
+				rpmActSetPulse += rpmPulseIncremental;
+			}
+			else if((rpmSetPulse < (rpmActSetPulse * 0.98)) && (motorAtSpeed == 0)){
+				rpmActSetPulse -= rpmPulseIncremental;
+			}
+			else{
+				rpmActSetPulse = rpmSetPulse;
+				motorAtSpeed = 1;
+			}
+		}
+		
+		
+		
+	//	if((rpmSetPulse < rpmActSetPulse) && (lowPulseState > 1)){
+	//		rpmActSetPulse--;
+	//		rpmActSetPulse--;
+	//	}
+//		else if((rpmSetPulse > rpmActSetPulse) && (highPulseState > 1)){
+//			rpmActSetPulse++;
+//			rpmActSetPulse++;
+//		}
+		
+		if(highPulseState == 2){
+			highPulseState = 0;
+		}
+		if(lowPulseState == 2){
+			lowPulseState = 0;
+		}
+		
+
+		
+		
   }
   /* USER CODE END 3 */
 }
@@ -169,7 +314,7 @@ void SystemClock_Config(void)
   /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -177,8 +322,21 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 180;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 2;
+  RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Activate the Over-Drive mode
+  */
+  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
@@ -187,12 +345,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
     Error_Handler();
   }
@@ -219,7 +377,7 @@ static void MX_ADC3_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc3.Instance = ADC3;
-  hadc3.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc3.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc3.Init.Resolution = ADC_RESOLUTION_12B;
   hadc3.Init.ScanConvMode = ENABLE;
   hadc3.Init.ContinuousConvMode = ENABLE;
@@ -428,7 +586,7 @@ static void MX_TIM5_Init(void)
 
   /* USER CODE END TIM5_Init 1 */
   htim5.Instance = TIM5;
-  htim5.Init.Prescaler = 180-1;
+  htim5.Init.Prescaler = 90-1;
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim5.Init.Period = 4294967295;
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -484,11 +642,21 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(motorEnable_GPIO_Port, motorEnable_Pin, GPIO_PIN_SET);
+
   /*Configure GPIO pins : High_Side_Pole_Pin Low_Side_Pole_Pin */
   GPIO_InitStruct.Pin = High_Side_Pole_Pin|Low_Side_Pole_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : motorEnable_Pin */
+  GPIO_InitStruct.Pin = motorEnable_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(motorEnable_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
