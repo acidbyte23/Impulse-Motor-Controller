@@ -92,6 +92,7 @@ int incrementalPulseDone;
 int motorAtSpeed;
 
 int pidEnable = 1;
+int pulseCycle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -175,7 +176,7 @@ int main(void)
 			// handle the motor pulses
 			pulseControl();		
 			// handle motor cold start
-			motorStartup();
+			//motorStartup();
 			
 			// check if pid is enabled
 			if((pidEnable == 1)){
@@ -189,6 +190,7 @@ int main(void)
 		
 		// do motor RPM calculations and motor run parameters
 		motorCalculations();
+			
 		// determine and control motor state
 		motorRunningState();
 	}
@@ -563,19 +565,26 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void pulseControl(){
 	// handle the highside pulse
-	if((highPulseState == 1) && (TIM5->CNT >= pulseDelay)){
+	if((highPulseState == 1) && (TIM5->CNT >= (pulseDelay)) && (pulseCycle == 0)){
 		incrementalPulseDone = 0; // reset incremental
 		highPulseState = 2; // set state int
+		pulseCycle = 1;
 		TIM3->ARR = pulseWidth; // set pulsewidth
 		__HAL_TIM_ENABLE(&htim3); // enable one shot pwm timer
 	}
 	
 	// handle the lowside pulse
-	if((lowPulseState == 1) && (TIM5->CNT >= (pulseDelay + halfTime))){
+	if((lowPulseState == 1) && (TIM5->CNT >= (pulseDelay + halfTime)) && (pulseCycle == 1)){
 		incrementalPulseDone = 0; // reset incremental bit
 		lowPulseState = 2; // set state int
+		pulseCycle = 0;
 		TIM4->ARR = pulseWidth; // set pulsewidth
 		__HAL_TIM_ENABLE(&htim4); // enable one shot pwm timer
+	}
+	
+	if((lowPulseState == 1) && (highPulseState == 1) && (motorRunning == 0)){
+		lowPulseState = 0;
+		highPulseState = 0;
 	}
 }
 		
@@ -661,15 +670,18 @@ void motorStartup(void){
 	// check if the motor is not running running yet
 	if((motorRunning == 0)){
 		// set startup pulses
-		if((TIM5->CNT > 1)){
+		if((TIM5->CNT > 1) && (highPulseState == 0) && (lowPulseState != 1)){
 			cycleTime = startupFrequency;
 			highPulseState = 1;
 			halfTime = startupFrequency / 2.0;
+		}
+		
+		if((highPulseState == 2)){
 			lowPulseState = 1;
 		}
 		
 		// reset timer 
-		if(TIM5->CNT > 400000){
+		if(TIM5->CNT > startupFrequency){
 			TIM5->CNT = 0;
 		}
 	}
@@ -707,7 +719,7 @@ void motorCalculations(void){
 		if(cycleTime > 0){ // catch divide by 0
 			hertzPulse = (1000000.0 / (float) cycleTime); // calculate motor coil hertz
 			rpmPulse = (hertzPulse / uniPolePass)  * 60.0; // calculate rpm
-			pulseDelay = ((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint); // calculate pulse time delay
+			pulseDelay = (((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint)); // calculate pulse time delay
 			pulseWidth = (uint32_t) (((((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid); // calculate pulse width
 			
 			if(pulseWidth > 65535){ // catch overflow

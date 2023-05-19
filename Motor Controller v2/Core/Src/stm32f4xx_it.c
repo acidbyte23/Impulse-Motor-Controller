@@ -64,6 +64,7 @@ extern uint32_t halfTime;
 // pulse flags
 extern int highPulseState;
 extern int lowPulseState;
+extern int pulseCycle;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -215,7 +216,9 @@ void EXTI0_IRQHandler(void)
 	// reset timer
 	TIM5->CNT = 0;
 	// set pulse flag
+	if((highPulseState == 0) && (pulseCycle == 0)){
 	highPulseState=1;
+	}
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(High_Side_Pole_Pin);
   /* USER CODE BEGIN EXTI0_IRQn 1 */
@@ -232,7 +235,9 @@ void EXTI1_IRQHandler(void)
 	// take half time
 	halfTime = TIM5->CNT;
 	// set pulse flag
+	if((lowPulseState == 0) && (pulseCycle == 1)){
 	lowPulseState=1;
+	}
   /* USER CODE END EXTI1_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(Low_Side_Pole_Pin);
   /* USER CODE BEGIN EXTI1_IRQn 1 */

@@ -27,28 +27,7 @@ Project File Date:  05/08/2023
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'X:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'Impulse Motor Controller'
-compiling main.c...
-../Core/Src/main.c(616): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  		if((rpmSetPulse > (rpmActSetPulse * 1.02)) && (motorAtSpeed == 0)){
-../Core/Src/main.c(619): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  		else if((rpmSetPulse < (rpmActSetPulse * 0.98)) && (motorAtSpeed == 0)){
-../Core/Src/main.c(645): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  	if((hertzPulse > 2.0) && (motorEnable == 1)){
-../Core/Src/main.c(648): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  	else if((hertzPulse > 2.0) && (motorEnable == 1) && (pidEnable == 1)){
-../Core/Src/main.c(675): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  				hertzPulse = (1000000.0 / (float) cycleTime);
-../Core/Src/main.c(677): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  			rpmPulse = (hertzPulse / uniPolePass)  * 60.0;
-../Core/Src/main.c(678): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  			pulseDelay = ((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint);
-../Core/Src/main.c(679): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  			pulseWidth = (uint32_t) (((((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid);
-../Core/Src/main.c: 8 warnings, 0 errors
-linking...
-Program Size: Code=10792 RO-data=508 RW-data=144 ZI-data=2016  
-FromELF: creating hex file...
-"Impulse Motor Controller\Impulse Motor Controller.axf" - 0 Error(s), 8 Warning(s).
+"Impulse Motor Controller\Impulse Motor Controller.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -72,7 +51,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE:5.4.0
       Include file:  CMSIS\Core\Include\tz_context.h
-Build Time Elapsed:  00:00:04
+Build Time Elapsed:  00:00:00
 </pre>
 </body>
 </html>
