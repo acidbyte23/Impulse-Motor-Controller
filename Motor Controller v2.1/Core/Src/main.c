@@ -58,18 +58,15 @@ UART_HandleTypeDef huart5;
 uint32_t analogInputs[4];
 uint32_t pulseDelayAvg;
 uint32_t pulseWidthAvg;
-uint32_t rpmPulseSetAvg;
 
 //Shift register parameter's
 int DELAY_SHIFT = 10;
 int WIDTH_SHIFT = 10;
-int RPM_SHIFT = 20;
 
 //Shift registers var's
 uint32_t analogShift[SHIFT_ARRAY][4];
 uint32_t pulseDelayAvgCalc;
 uint32_t pulseWidthAvgCalc;
-uint32_t rpmPulseSetAvgCalc;
 
 //Voltage reading parameters
 const float R1 = 99000.0;
@@ -892,17 +889,6 @@ void analogShifter(void){
 				
 		// divide by the registers				
 		pulseWidthAvg = pulseWidthAvgCalc / WIDTH_SHIFT;
-				
-		// reset width average
-		rpmPulseSetAvgCalc = 0;
-				
-		// add all width registers
-		for(int i = 0; i < (RPM_SHIFT); i++){
-			rpmPulseSetAvgCalc += analogShift[i][4];
-		}
-				
-		// divide by the registers				
-		rpmPulseSetAvg = rpmPulseSetAvgCalc / RPM_SHIFT;
 }
 
 void dataSelector(void){
