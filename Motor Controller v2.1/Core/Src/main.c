@@ -62,18 +62,21 @@ uint32_t pulseWidthAvg;
 //Shift register parameter's
 int VOLTAGE_SHIFT = 10;
 int CURRENT_SHIFT = 10;
+int TEMP_SHIFT = 10;
 int DELAY_SHIFT = 20;
 int WIDTH_SHIFT = 20;
 int RPM_SHIFT = 10;
 int CYCLETIME_SHIFT = 5;
 
 //Shift registers var's
-uint32_t analogShift[SHIFT_ARRAY][4];
+uint32_t analogShift[SHIFT_ARRAY][5];
 float rpmShift[SHIFT_ARRAY];
 float cycleShift[SHIFT_ARRAY][2];
 uint32_t voltageAvgCalc;
 uint32_t currentAvgCalc;
+uint32_t tempAvgCalc;
 uint32_t pulseDelayAvgCalc;
+uint32_t pulseWidthAvgCalc;
 uint32_t pulseWidthAvgCalc;
 float rpmAvgCalc;
 
@@ -91,9 +94,13 @@ const float maxCurrent = 10.0;
 //Current reading var's
 const float currentMultiplier = (maxCurrent / 4096.0); 
 
+// TODO TEMPERATURE
+const float tempMultiplier = 1;//(maxTemperature / 4096.0); 
+
 //Power var's
 float motorVoltage;
 float motorCurrent;
+float motorTemperature;
 
 //Motor parameters
 float uniPolePass = 3.0;
@@ -125,6 +132,7 @@ float rpmPulse;
 float hertzPulse;
 uint32_t voltageAvg;
 uint32_t currentAvg;
+uint32_t tempAvg;
 float rpmAvg;
 
 //Motor state var's
@@ -167,11 +175,14 @@ float lastError;
 float multiplierPid;
 
 //UART var's
+uint8_t Rx_data[16];
+int rxDataAvailable;
+
+//UART bus setable
+int serialMotorEnable;
 uint32_t serialDelaySetpoint;
 uint32_t serialWidthSetpoint;
 float serialRpmSetpoint;
-uint8_t Rx_data[16];
-int rxDataAvailable;
 
 
 /* USER CODE END PV */
@@ -394,7 +405,7 @@ static void MX_ADC3_Init(void)
   hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc3.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc3.Init.NbrOfConversion = 4;
+  hadc3.Init.NbrOfConversion = 5;
   hadc3.Init.DMAContinuousRequests = DISABLE;
   hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc3) != HAL_OK)
@@ -438,8 +449,17 @@ static void MX_ADC3_Init(void)
   {
     Error_Handler();
   }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_10;
+  sConfig.Rank = 5;
+  if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN ADC3_Init 2 */
-	HAL_ADC_Start_DMA(&hadc3, analogInputs, 4);
+	HAL_ADC_Start_DMA(&hadc3, analogInputs, 5);
   /* USER CODE END ADC3_Init 2 */
 
 }
@@ -684,9 +704,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -967,7 +987,7 @@ void rpmShifter(void){
 void analogShifter(void){
 	// shift analog input array
 	for(int i = (SHIFT_ARRAY - 1);i >= 0;i--){
-		for(int ii = 0;ii <= 4;ii++){
+		for(int ii = 0;ii <= 5;ii++){
 			analogShift[i][ii] = analogShift[(i-1)][ii];
 		}
 	}
@@ -996,6 +1016,19 @@ void analogShifter(void){
 	// divide by the registers	
 	if(currentAvgCalc > 0){
 		currentAvg = currentAvgCalc / CURRENT_SHIFT;
+	}
+	
+	// reset temperature average
+	tempAvgCalc = 0;
+			
+	// add all temperature registers
+	for(int i = 0; i < (TEMP_SHIFT); i++){
+		tempAvgCalc += analogShift[i][1];
+	}
+					
+	// divide by the registers	
+	if(currentAvgCalc > 0){
+		tempAvg = tempAvgCalc / TEMP_SHIFT;
 	}
 	
 	// reset delay average
@@ -1027,11 +1060,13 @@ void analogShifter(void){
 
 void dataSelector(void){
 	if(uartEnable == 0){ // get analog values
+		// motorEnable == digital input
 		delaySetpoint = ((1000.0 / 4096.0) * (float) pulseDelayAvg);
 		widthSetpoint = ((1000.0 / 4096.0) * (float) pulseWidthAvg);
 		rpmSetPulse = ((maxRpmSetpoint / 4096.0) * (float) pulseWidthAvg);
 	}
 	else if(uartEnable == 1){ // get uart values
+		motorEnable == serialMotorEnable;
 		delaySetpoint = (float)serialDelaySetpoint;
 		widthSetpoint = (float)serialWidthSetpoint;
 		rpmSetPulse = serialRpmSetpoint;
@@ -1041,6 +1076,7 @@ void dataSelector(void){
 void powerCalculations(void){
 	motorVoltage = voltageAvg * voltageMultiplier;
 	motorCurrent = currentAvg * currentMultiplier;
+	motorTemperature = tempAvg * tempMultiplier;
 }
 
 void motorCalculations(void){

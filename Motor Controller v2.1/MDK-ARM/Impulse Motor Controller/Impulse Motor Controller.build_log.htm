@@ -27,6 +27,7 @@ Project File Date:  05/20/2023
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'X:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'Impulse Motor Controller'
+assembling startup_stm32f446xx.s...
 compiling main.c...
 ../Core/Src/main.c(85): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   const float maxVoltage = (3.3 * ((R1 + R2) / R2));
@@ -34,29 +35,31 @@ compiling main.c...
   const float voltageMultiplier = (maxVoltage / 4096.0); 
 ../Core/Src/main.c(92): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   const float currentMultiplier = (maxCurrent / 4096.0); 
-../Core/Src/main.c(810): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  		if((rpmSetPulse > (rpmActSetPulse * 1.01)) && (motorAtSpeed == 0)){
 ../Core/Src/main.c(813): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  		if((rpmSetPulse > (rpmActSetPulse * 1.01)) && (motorAtSpeed == 0)){
+../Core/Src/main.c(816): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		else if((rpmSetPulse < (rpmActSetPulse * 0.99)) && (motorAtSpeed == 0)){
-../Core/Src/main.c(820): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(823): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		if((rpmPulse >= (rpmActSetPulse * 0.99)) && (rpmPulse <= (rpmActSetPulse * 1.01))){
-../Core/Src/main.c(820): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(823): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		if((rpmPulse >= (rpmActSetPulse * 0.99)) && (rpmPulse <= (rpmActSetPulse * 1.01))){
-../Core/Src/main.c(1032): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(1036): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		rpmSetPulse = ((maxRpmSetpoint / 4096.0) * (float) pulseWidthAvg);
-../Core/Src/main.c(1048): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(1039): warning:  #174-D: expression has no effect
+  		motorEnable == serialMotorEnable;
+../Core/Src/main.c(1053): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		hertzPulse = (1000000.0 / (float) cycleTime); // calculate motor coil hertz
-../Core/Src/main.c(1049): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(1054): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		rpmPulse = (hertzPulse / uniPolePass)  * 60.0; // calculate rpm
-../Core/Src/main.c(1050): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(1055): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		pulseDelay = (((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint)); // calculate pulse time delay
-../Core/Src/main.c(1051): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(1056): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		pulseWidth = (uint32_t) (((((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid); // calculate pulse width
-../Core/Src/main.c: 12 warnings, 0 errors
+../Core/Src/main.c: 13 warnings, 0 errors
 linking...
 Program Size: Code=14506 RO-data=518 RW-data=288 ZI-data=2680  
 FromELF: creating hex file...
-"Impulse Motor Controller\Impulse Motor Controller.axf" - 0 Error(s), 12 Warning(s).
+"Impulse Motor Controller\Impulse Motor Controller.axf" - 0 Error(s), 13 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -80,7 +83,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE:5.4.0
       Include file:  CMSIS\Core\Include\tz_context.h
-Build Time Elapsed:  00:00:04
+Build Time Elapsed:  00:00:03
 </pre>
 </body>
 </html>

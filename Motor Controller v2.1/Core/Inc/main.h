@@ -59,6 +59,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define Temperature_Pin GPIO_PIN_0
+#define Temperature_GPIO_Port GPIOC
 #define Voltage_Sense_Pin GPIO_PIN_0
 #define Voltage_Sense_GPIO_Port GPIOA
 #define Current_Sense_Pin GPIO_PIN_1
