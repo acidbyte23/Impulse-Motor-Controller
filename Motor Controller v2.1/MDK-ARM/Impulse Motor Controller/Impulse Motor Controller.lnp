@@ -21,6 +21,7 @@
 "impulse motor controller\stm32f4xx_hal_exti.o"
 "impulse motor controller\stm32f4xx_hal_tim.o"
 "impulse motor controller\stm32f4xx_hal_tim_ex.o"
+"impulse motor controller\stm32f4xx_hal_uart.o"
 "impulse motor controller\system_stm32f4xx.o"
 --strict --scatter "Impulse Motor Controller\Impulse Motor Controller.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols

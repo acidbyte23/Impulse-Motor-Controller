@@ -73,8 +73,10 @@ void Error_Handler(void);
 #define Low_Side_Pole_Pin GPIO_PIN_1
 #define Low_Side_Pole_GPIO_Port GPIOB
 #define Low_Side_Pole_EXTI_IRQn EXTI1_IRQn
-#define motorEnable_Pin GPIO_PIN_6
-#define motorEnable_GPIO_Port GPIOC
+#define motorEnable_Pin GPIO_PIN_14
+#define motorEnable_GPIO_Port GPIOB
+#define motorEnableOut_Pin GPIO_PIN_6
+#define motorEnableOut_GPIO_Port GPIOC
 #define High_Side_Pole_Out_Pin GPIO_PIN_8
 #define High_Side_Pole_Out_GPIO_Port GPIOC
 #define UartTX_Pin GPIO_PIN_12

@@ -59,8 +59,8 @@ extern UART_HandleTypeDef huart5;
 /* USER CODE BEGIN EV */
 
 // cycle times
-extern uint32_t cycleTime;
-extern uint32_t halfTime;
+extern uint32_t cycleTimeRaw;
+extern uint32_t halfTimeRaw;
 
 // pulse flags
 extern int highPulseState;
@@ -221,13 +221,8 @@ void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 	// take cycle time
-	
-	//if((motorRunning == 1) & (motorEnable == 1)){
-		// reset timer
-		cycleTime = TIM5->CNT;
-		TIM5->CNT = 0;
-	//}
-		
+	cycleTimeRaw = TIM5->CNT;
+	TIM5->CNT = 0;
 		
 	if(motorRunning == 1){
 		
@@ -254,7 +249,7 @@ void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 	// take half time
-	halfTime = TIM5->CNT;
+	halfTimeRaw = TIM5->CNT;
 	
 	if(motorRunning == 1){
 		TIM4->ARR = pulseDelay + pulseWidth + 1; // set pulsewidth
