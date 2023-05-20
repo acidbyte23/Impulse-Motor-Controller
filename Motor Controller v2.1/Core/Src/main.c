@@ -180,6 +180,7 @@ uint8_t Tx_data[8];
 int rxDataAvailable;
 
 //UART bus setable
+uint32_t tempConv;
 int serialMotorEnable;
 uint32_t serialDelaySetpoint;
 uint32_t serialWidthSetpoint;
@@ -199,6 +200,7 @@ static void MX_ADC3_Init(void);
 static void MX_UART5_Init(void);
 /* USER CODE BEGIN PFP */
 
+static void alarmProcess(void);
 static void rxDataProcessing(void);
 static void PIDcalculations(void);
 static void RPMmotorRamp(void);
@@ -260,6 +262,9 @@ int main(void)
 	GPIOC->BSRR |= (1<<6);
 	prevMotorEnable = 0;
 	
+	// set alarm output low
+	GPIOB->BSRR |= (1<<13); // low
+	
 	// set pulse states low
 	lowPulseState = 0;
 	highPulseState = 0;
@@ -278,6 +283,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		// handle alarms
+		alarmProcess();
+		
 		// handle the motor enable/disable function
 		motorEnableSafe();
 		
@@ -711,6 +719,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(AlarmActive_GPIO_Port, AlarmActive_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(motorEnableOut_GPIO_Port, motorEnableOut_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : High_Side_Pole_Pin Low_Side_Pole_Pin */
@@ -718,6 +729,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : AlarmActive_Pin */
+  GPIO_InitStruct.Pin = AlarmActive_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(AlarmActive_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : motorEnable_Pin */
   GPIO_InitStruct.Pin = motorEnable_Pin;
@@ -756,6 +774,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	huart->ErrorCode |= HAL_UART_ERROR_ORE;
 }
 		
+void alarmProcess(void){
+		//GPIOB->BSRR |= (1<<13); // low
+		//GPIOB->BSRR |= (1<<13) <<16; // high
+}
+
 void motorEnableSafe(void){
 	// enable/disable the motor on a rising/falling trigger
 	if((motorEnable == 1) && (prevMotorEnable == 0)){
@@ -1319,12 +1342,49 @@ void rxDataProcessing(){
 			
 			case 0x53: // minimum speed 
 				break;
+			
 			case 0x61: // bus voltage
+				//Send motor data over uart
+				tempConv = (uint32_t)(motorVoltage * 10000.0);
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x61;
+				Tx_data[2]= (tempConv >> 24);
+				Tx_data[3]= (tempConv >> 16);
+				Tx_data[4]= (tempConv >> 8);
+				Tx_data[5]= (tempConv);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
+			
 			case 0x62: // motor current
+				//Send motor data over uart
+				tempConv = (uint32_t)(motorCurrent * 10000.0);
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x62;
+				Tx_data[2]= (tempConv >> 24);
+				Tx_data[3]= (tempConv >> 16);
+				Tx_data[4]= (tempConv >> 8);
+				Tx_data[5]= (tempConv);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
+			
 			case 0x63: // temperature
+				//Send motor data over uart
+				tempConv = (uint32_t)(motorTemperature * 10000.0);
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x63;
+				Tx_data[2]= (tempConv >> 24);
+				Tx_data[3]= (tempConv >> 16);
+				Tx_data[4]= (tempConv >> 8);
+				Tx_data[5]= (tempConv);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
+			
 			case 0x71: // pid avg input
 				break;
 			
