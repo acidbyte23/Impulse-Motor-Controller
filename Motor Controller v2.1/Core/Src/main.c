@@ -176,6 +176,7 @@ float multiplierPid;
 
 //UART var's
 uint8_t Rx_data[16];
+uint8_t Tx_data[8];
 int rxDataAvailable;
 
 //UART bus setable
@@ -1115,22 +1116,6 @@ void rxDataProcessing(){
 				break;
 			case 0x14: // cycle avg enable
 				break;
-			case 0x21: // motor running
-				break;
-			case 0x22: // motor at speed
-				break;
-			case 0x31: // cycle time
-				break;
-			case 0x32: // half time
-				break;
-			case 0x33: // motor hertz
-				break;
-			case 0x34: // motor rpm
-				break;
-			case 0x35: // motor rpm avg
-				break;
-			case 0x36: // actual pid setpoint
-				break;
 			case 0x41: // delay setpoint
 				break;
 			case 0x42: // width setpoint
@@ -1145,6 +1130,195 @@ void rxDataProcessing(){
 				break;
 			case 0x53: // minimum speed 
 				break;
+			case 0x71: // pid avg input
+				break;
+			case 0x72: // pid minimum
+				break;
+			case 0x73: // pid maximum
+				break;
+			case 0x74: // Proportional
+				break;
+			case 0x75: // Integral
+				break;
+			case 0x76: // Derivative
+				break;	
+			case 0x81: // max temperature
+				break;	
+			case 0x82: // max voltage
+				break;	
+			case 0x83: // max current
+				break;		
+		}
+	}
+	// if the uart command was a register read action
+	else if((Rx_data[start] == 0x70) && (start < 9)){
+		switch(Rx_data[(start + 1)]){
+			
+			case 0x11: // motor enable
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x11;
+				Tx_data[2]= 0x01;
+				Tx_data[3]= 0x01;
+				Tx_data[4]= 0x01;
+				Tx_data[5]= motorEnable;
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x12: // pid enable
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x12;
+				Tx_data[2]= 0x01;
+				Tx_data[3]= 0x01;
+				Tx_data[4]= 0x01;
+				Tx_data[5]= pidEnable;
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x13: // uart enable
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x13;
+				Tx_data[2]= 0x01;
+				Tx_data[3]= 0x01;
+				Tx_data[4]= 0x01;
+				Tx_data[5]= uartEnable;
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x14: // cycle avg enable
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x14;
+				Tx_data[2]= 0x01;
+				Tx_data[3]= 0x01;
+				Tx_data[4]= 0x01;
+				Tx_data[5]= pidAvgInput;
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x21: // motor running
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x21;
+				Tx_data[2]= 0x01;
+				Tx_data[3]= 0x01;
+				Tx_data[4]= 0x01;
+				Tx_data[5]= motorRunning;
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x22: // motor at speed
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x22;
+				Tx_data[2]= 0x01;
+				Tx_data[3]= 0x01;
+				Tx_data[4]= 0x01;
+				Tx_data[5]= motorAtSpeed;
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x31: // cycle time
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x31;
+				Tx_data[2]= (cycleTime >> 24);
+				Tx_data[3]= (cycleTime >> 16);
+				Tx_data[4]= (cycleTime >> 8);
+				Tx_data[5]= (cycleTime);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x32: // half time
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x32;
+				Tx_data[2]= (halfTime >> 24);
+				Tx_data[3]= (halfTime >> 16);
+				Tx_data[4]= (halfTime >> 8);
+				Tx_data[5]= (halfTime);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x33: // motor hertz
+				break;
+			case 0x34: // motor rpm
+				break;
+			case 0x35: // motor rpm avg
+				break;
+			case 0x36: // actual pid setpoint
+				break;
+			case 0x37: // calculated pulse width
+				break;
+			
+			case 0x38: // calculated pulse delay
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x38;
+				Tx_data[2]= (pulseDelay >> 24);
+				Tx_data[3]= (pulseDelay >> 16);
+				Tx_data[4]= (pulseDelay >> 8);
+				Tx_data[5]= (pulseDelay);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x41: // delay setpoint
+				break;
+			case 0x42: // width setpoint
+				break;
+			case 0x43: // rpm setpoint
+				break;
+			case 0x44: // ramp up/down time
+				break;
+			
+			case 0x51: // startup frequency
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x51;
+				Tx_data[2]= (startupSetpoint >> 24);
+				Tx_data[3]= (startupSetpoint >> 16);
+				Tx_data[4]= (startupSetpoint >> 8);
+				Tx_data[5]= (startupSetpoint);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x52: // sweep speed 
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x52;
+				Tx_data[2]= (startupFrequencyDecr >> 24);
+				Tx_data[3]= (startupFrequencyDecr >> 16);
+				Tx_data[4]= (startupFrequencyDecr >> 8);
+				Tx_data[5]= (startupFrequencyDecr);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x53: // minimum speed 
+				break;
 			case 0x61: // bus voltage
 				break;
 			case 0x62: // motor current
@@ -1153,75 +1327,44 @@ void rxDataProcessing(){
 				break;
 			case 0x71: // pid avg input
 				break;
+			
 			case 0x72: // pid minimum
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x72;
+				Tx_data[2]= 0x00;
+				Tx_data[3]= 0x00;
+				Tx_data[4]= 0x00;
+				Tx_data[5]= PID_MIN;
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
+			
 			case 0x73: // pid maximum
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x73;
+				Tx_data[2]= 0x00;
+				Tx_data[3]= 0x00;
+				Tx_data[4]= 0x00;
+				Tx_data[5]= PID_MAX;
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
+			
 			case 0x74: // Proportional
 				break;
 			case 0x75: // Integral
 				break;
 			case 0x76: // Derivative
 				break;		
-		}
-	}
-	else if((Rx_data[start] == 0x70) && (start < 9)){
-		switch(Rx_data[(start + 1)]){
-			case 0x11: // motor enable
-				break;
-			case 0x12: // pid enable
-				break;
-			case 0x13: // uart enable
-				break;
-			case 0x14: // cycle avg enable
-				break;
-			case 0x21: // motor running
-				break;
-			case 0x22: // motor at speed
-				break;
-			case 0x31: // cycle time
-				break;
-			case 0x32: // half time
-				break;
-			case 0x33: // motor hertz
-				break;
-			case 0x34: // motor rpm
-				break;
-			case 0x35: // motor rpm avg
-				break;
-			case 0x36: // actual pid setpoint
-				break;
-			case 0x41: // delay setpoint
-				break;
-			case 0x42: // width setpoint
-				break;
-			case 0x43: // rpm setpoint
-				break;
-			case 0x44: // ramp up/down time
-				break;
-			case 0x51: // startup frequency
-				break;
-			case 0x52: // sweep speed 
-				break;
-			case 0x53: // minimum speed 
-				break;
-			case 0x61: // bus voltage
-				break;
-			case 0x62: // motor current
-				break;
-			case 0x63: // temperature
-				break;
-			case 0x71: // pid avg input
-				break;
-			case 0x72: // pid minimum
-				break;
-			case 0x73: // pid maximum
-				break;
-			case 0x74: // Proportional
-				break;
-			case 0x75: // Integral
-				break;
-			case 0x76: // Derivative
+			case 0x81: // max temperature
+				break;	
+			case 0x82: // max voltage
+				break;	
+			case 0x83: // max current
 				break;		
 		}
 	}
@@ -1254,32 +1397,6 @@ void rxDataProcessing(){
 //					HAL_UART_Transmit(&huart5,data,sizeof(data),10);
 //					break;
 
-			
-//				case 0x64: // set pid max tune
-//					data[0]= 0x80;
-//					data[1]= 0x64;
-//					data[2]=(PID_MAX >> 24);
-//					data[3]=(PID_MAX >> 16);
-//					data[4]=(PID_MAX >> 8);
-//					data[5]=(PID_MAX);
-//					data[6]=0x11;
-//					data[7]=0x12;
-//					HAL_UART_Transmit(&huart5,data,sizeof(data),10);
-//					break;
-					
-//								case 4:
-				//Send motor data over uart
-				// calculate pulse delay
-//				data[0]= 0x70;
-//				data[1]= 0x50;
-//				data[2]=(pulseDelay >> 24);
-//				data[3]=(pulseDelay >> 16);
-//				data[4]=(pulseDelay >> 8);
-//				data[5]=(pulseDelay);
-//				data[6]=0x11;
-//				data[7]=0x12;
-//				HAL_UART_Transmit(&huart5,data,sizeof(data),10);
-//				break;
 
 			
 	// set all databits to 0
