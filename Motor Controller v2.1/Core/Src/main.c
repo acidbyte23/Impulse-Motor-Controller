@@ -297,9 +297,12 @@ int main(void)
 		// check if the motor is enabled
 		if(motorEnable == 1){	
 			
-			// handle motor cold start
-			motorStartup();
-			
+			// check if the motor needs a cold start
+			if(motorRunning == 0){
+				// handle motor cold start
+				motorStartup();
+			}
+				
 			// handle stable rpm feedback
 			rpmShifter();
 			
@@ -311,8 +314,8 @@ int main(void)
 				// ramp the motor rpm setpoint
 				RPMmotorRamp();
 			}
-			
 		}
+		
 		// get and shift analog inputs
 		analogShifter();
 		
@@ -872,60 +875,51 @@ void RPMmotorRamp(void){
 
 void motorStartup(void){
 	// check if the motor is not running running yet
-	if((motorRunning == 0)){
-		// set startup pulses
-		
-		// set startup parameters
-		if(motorStartupState == 0){
-			TIM3->CCR3 = 1;
-			TIM3->ARR = 65534;
-			TIM4->CCR1 = 1;
-			TIM4->ARR = 65534;
-			motorStartupState = 1;
-		}
-		// start first pulse
-		else if(motorStartupState == 1){
-			TIM5->CNT = 0;
-			if(pulseCycle == 0){
-				__HAL_TIM_ENABLE(&htim3); // enable one shot pwm timer
-				pulseCycle = 1;
-			}
-			else{
-				__HAL_TIM_ENABLE(&htim4); // enable one shot pwm timer
-				pulseCycle = 0;
-			}
-			motorStartupState = 2;
-		}
-		// control ramp of of frequency
-		else if(motorStartupState == 2){
-			// control lowside pulse
-			if((pulseCycle == 1) && (TIM5->CNT >= (startupFrequency / 2))){
-				pulseCycle = 0;
-				__HAL_TIM_ENABLE(&htim4); // enable one shot pwm timer
-				if(startupFrequency > startupFrequencyDecr){
-					startupFrequency -= startupFrequencyDecr;
-				}
-			}
-			// control highside pulse
-			else if((pulseCycle == 0) && (TIM5->CNT >= startupFrequency)){
-				TIM5->CNT = 0;
-				__HAL_TIM_ENABLE(&htim3); // enable one shot pwm timer
-				if(startupFrequency > startupFrequencyDecr){
-					startupFrequency -= startupFrequencyDecr;
-				}
-			}
-			
-			// if not running restart
-			if((startupFrequency < startupFrequencyDecr) && (motorRunning == 0)){
-				startupFrequency = startupSetpoint;
-			}
-		}
-		
+
+	// set startup parameters
+	if(motorStartupState == 0){
+		TIM3->CCR3 = 1;
+		TIM3->ARR = 65534;
+		TIM4->CCR1 = 1;
+		TIM4->ARR = 65534;
+		motorStartupState = 1;
 	}
-	// if running reset the startup ramp
-	else if(motorRunning == 1){
-		startupFrequency = startupSetpoint;
-		motorStartupState = 0;
+	// start first pulse
+	else if(motorStartupState == 1){
+		TIM5->CNT = 0;
+		if(pulseCycle == 0){
+			__HAL_TIM_ENABLE(&htim3); // enable one shot pwm timer
+			pulseCycle = 1;
+		}
+		else{
+			__HAL_TIM_ENABLE(&htim4); // enable one shot pwm timer
+			pulseCycle = 0;
+		}
+		motorStartupState = 2;
+	}
+	// control ramp of of frequency
+	else if(motorStartupState == 2){
+		// control lowside pulse
+		if((pulseCycle == 1) && (TIM5->CNT >= (startupFrequency / 2))){
+			pulseCycle = 0;
+			__HAL_TIM_ENABLE(&htim4); // enable one shot pwm timer
+			if(startupFrequency > startupFrequencyDecr){
+				startupFrequency -= startupFrequencyDecr;
+			}
+		}
+		// control highside pulse
+		else if((pulseCycle == 0) && (TIM5->CNT >= startupFrequency)){
+			TIM5->CNT = 0;
+			__HAL_TIM_ENABLE(&htim3); // enable one shot pwm timer
+			if(startupFrequency > startupFrequencyDecr){
+				startupFrequency -= startupFrequencyDecr;
+			}
+		}
+		
+		// if not running restart
+		if((startupFrequency < startupFrequencyDecr) && (motorRunning == 0)){
+			startupFrequency = startupSetpoint;
+		}
 	}
 }
 
@@ -938,6 +932,8 @@ void motorRunningState(void){
 		}
 	}
 	else if(motorEnable == 0){
+		startupFrequency = startupSetpoint;
+		motorStartupState = 0;
 		motorRunning = 0;
 	}
 	
