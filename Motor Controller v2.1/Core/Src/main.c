@@ -1089,7 +1089,7 @@ void dataSelector(void){
 		rpmSetPulse = ((maxRpmSetpoint / 4096.0) * (float) pulseWidthAvg);
 	}
 	else if(uartEnable == 1){ // get uart values
-		motorEnable == serialMotorEnable;
+		motorEnable = serialMotorEnable;
 		delaySetpoint = (float)serialDelaySetpoint;
 		widthSetpoint = (float)serialWidthSetpoint;
 		rpmSetPulse = serialRpmSetpoint;
