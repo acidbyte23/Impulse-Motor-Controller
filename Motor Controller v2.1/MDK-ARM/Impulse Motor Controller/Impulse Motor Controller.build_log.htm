@@ -26,9 +26,7 @@ Project File Date:  05/20/2023
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'X:\Keil_v5\ARM\ARMCC\Bin'
-Rebuild target 'Impulse Motor Controller'
-assembling startup_stm32f446xx.s...
-compiling stm32f4xx_ll_adc.c...
+Build target 'Impulse Motor Controller'
 compiling main.c...
 ../Core/Src/main.c(88): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   const float maxVoltage = (3.3 * ((R1 + R2) / R2));
@@ -36,58 +34,65 @@ compiling main.c...
   const float voltageMultiplier = (maxVoltage / 4096.0); 
 ../Core/Src/main.c(95): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   const float currentMultiplier = (maxCurrent / 4096.0); 
-../Core/Src/main.c(857): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  		if((rpmSetPulse > (rpmActSetPulse * 1.01)) && (motorAtSpeed == 0)){
 ../Core/Src/main.c(860): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  		if((rpmSetPulse > (rpmActSetPulse * 1.01)) && (motorAtSpeed == 0)){
+../Core/Src/main.c(863): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		else if((rpmSetPulse < (rpmActSetPulse * 0.99)) && (motorAtSpeed == 0)){
-../Core/Src/main.c(867): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(870): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		if((rpmPulse >= (rpmActSetPulse * 0.99)) && (rpmPulse <= (rpmActSetPulse * 1.01))){
-../Core/Src/main.c(867): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(870): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		if((rpmPulse >= (rpmActSetPulse * 0.99)) && (rpmPulse <= (rpmActSetPulse * 1.01))){
-../Core/Src/main.c(1086): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(1089): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		rpmSetPulse = ((maxRpmSetpoint / 4096.0) * (float) pulseWidthAvg);
-../Core/Src/main.c(1089): warning:  #174-D: expression has no effect
+../Core/Src/main.c(1092): warning:  #174-D: expression has no effect
   		motorEnable == serialMotorEnable;
-../Core/Src/main.c(1104): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  		hertzPulse = (1000000.0 / (float) cycleTime); // calculate motor coil hertz
-../Core/Src/main.c(1105): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  		rpmPulse = (hertzPulse / uniPolePass)  * 60.0; // calculate rpm
-../Core/Src/main.c(1106): warning:  #1035-D: single-precision operand implicitly converted to double-precision
-  		pulseDelay = (((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint)); // calculate pulse time delay
 ../Core/Src/main.c(1107): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  		hertzPulse = (1000000.0 / (float) cycleTime); // calculate motor coil hertz
+../Core/Src/main.c(1108): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  		rpmPulse = (hertzPulse / uniPolePass)  * 60.0; // calculate rpm
+../Core/Src/main.c(1109): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  		pulseDelay = (((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint)); // calculate pulse time delay
+../Core/Src/main.c(1110): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   		pulseWidth = (uint32_t) (((((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid); // calculate pulse width
-../Core/Src/main.c(1344): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(1214): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				serialRpmSetpoint = (float)tempConv / 10000.0;
+../Core/Src/main.c(1377): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(hertzPulse * 100000.0);
+../Core/Src/main.c(1391): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(rpmPulse * 100000.0);
+../Core/Src/main.c(1405): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(rpmAvg * 100000.0);
+../Core/Src/main.c(1419): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(rpmActSetPulse * 100000.0);
+../Core/Src/main.c(1485): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(rpmSetPulse * 100000.0);
+../Core/Src/main.c(1499): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(rpmPulseAttackTime * 100000.0);
+../Core/Src/main.c(1539): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(minimumMotorFreq * 100000.0);
+../Core/Src/main.c(1553): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   				tempConv = (uint32_t)(motorVoltage * 10000.0);
-../Core/Src/main.c(1358): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(1567): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   				tempConv = (uint32_t)(motorCurrent * 10000.0);
-../Core/Src/main.c(1372): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+../Core/Src/main.c(1581): warning:  #1035-D: single-precision operand implicitly converted to double-precision
   				tempConv = (uint32_t)(motorTemperature * 10000.0);
-../Core/Src/main.c: 16 warnings, 0 errors
-compiling stm32f4xx_it.c...
-compiling stm32f4xx_hal_msp.c...
-compiling stm32f4xx_hal_adc_ex.c...
-compiling stm32f4xx_hal_rcc.c...
-compiling stm32f4xx_hal_adc.c...
-compiling stm32f4xx_hal_rcc_ex.c...
-compiling stm32f4xx_hal_dma.c...
-compiling stm32f4xx_hal_dma_ex.c...
-compiling stm32f4xx_hal_flash.c...
-compiling stm32f4xx_hal_gpio.c...
-compiling stm32f4xx_hal_flash_ramfunc.c...
-compiling stm32f4xx_hal_flash_ex.c...
-compiling stm32f4xx_hal_pwr.c...
-compiling stm32f4xx_hal_cortex.c...
-compiling stm32f4xx_hal_pwr_ex.c...
-compiling stm32f4xx_hal.c...
-compiling stm32f4xx_hal_exti.c...
-compiling stm32f4xx_hal_tim_ex.c...
-compiling stm32f4xx_hal_uart.c...
-compiling stm32f4xx_hal_tim.c...
-compiling system_stm32f4xx.c...
+../Core/Src/main.c(1634): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(kp * 10000.0);
+../Core/Src/main.c(1648): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(ki * 10000.0);
+../Core/Src/main.c(1662): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(kd * 10000.0);
+../Core/Src/main.c(1676): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(temperatureThreshold * 10000.0);
+../Core/Src/main.c(1690): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(voltageThreshold * 10000.0);
+../Core/Src/main.c(1704): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  				tempConv = (uint32_t)(currentThreshold * 10000.0);
+../Core/Src/main.c: 30 warnings, 0 errors
 linking...
-Program Size: Code=15558 RO-data=518 RW-data=316 ZI-data=2756  
+Program Size: Code=16410 RO-data=518 RW-data=328 ZI-data=2760  
 FromELF: creating hex file...
-"Impulse Motor Controller\Impulse Motor Controller.axf" - 0 Error(s), 16 Warning(s).
+"Impulse Motor Controller\Impulse Motor Controller.axf" - 0 Error(s), 30 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -111,7 +116,7 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE:5.4.0
       Include file:  CMSIS\Core\Include\tz_context.h
-Build Time Elapsed:  00:00:47
+Build Time Elapsed:  00:00:05
 </pre>
 </body>
 </html>
