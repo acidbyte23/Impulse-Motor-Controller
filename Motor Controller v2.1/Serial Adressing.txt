@@ -1,0 +1,57 @@
+10 // basic control
+11 // motor enable
+12 // pid enable
+13 // uart enable
+14 // cycle avg enable
+
+20 // motor status
+21 // motor running
+22 // motor at speed
+
+30 // motor info
+31 // cycle time
+32 // half time
+33 // motor hertz
+34 // motor rpm
+35 // motor rpm avg
+36 // actual pid setpoint
+37 // calculated width
+38 // calculated delay
+39 // uni pole pass
+
+40 // motor control
+41 // delay setpoint
+42 // width setpoint
+43 // rpm setpoint
+44 // ramp up/down time
+
+50 // motor startup
+51 // startup frequency
+52 // sweep speed 
+53 // minimum speed 
+
+60 // analog inputs
+61 // bus voltage
+62 // motor current
+63 // temperature
+
+70 // pid settings
+71 // pid avg input
+72 // pid minimum
+73 // pid maximum
+74 // Proportional
+75 // Integral
+76 // Derivative
+
+80 // maximum analog values
+81 // max temperature before lockout
+82 // max voltage before lockout
+83 // max current before lockout
+
+90 // Alarms
+91 // Alarm Active
+92 // Over Temperature
+93 // Over Voltage
+94 // Over Current
+
+

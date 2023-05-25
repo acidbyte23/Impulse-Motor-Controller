@@ -189,6 +189,9 @@ uint32_t serialDelaySetpoint;
 uint32_t serialWidthSetpoint;
 float serialRpmSetpoint;
 
+//Alarm var's
+int AlarmActive;
+
 
 /* USER CODE END PV */
 
@@ -781,21 +784,35 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 		
 void alarmProcess(void){
-		//GPIOB->BSRR |= (1<<13); // low
-		//GPIOB->BSRR |= (1<<13) <<16; // high
+	// TODO
+	// check alarm states
+	
+	// Set alarm output
+	if(AlarmActive == 1){
+		GPIOB->BSRR |= (1<<13) <<16; // high
+	}
+	else{
+		GPIOB->BSRR |= (1<<13); // low
+	}
+	
+ // reset alarm
+	if(!(GPIOB->IDR &(1 << 12))){
+		AlarmActive = 0;
+	}
 }
 
 void motorEnableSafe(void){
 	// enable/disable the motor on a rising/falling trigger
-	if((motorEnable == 1) && (prevMotorEnable == 0)){
+	if((motorEnable == 1) && (prevMotorEnable == 0) && (AlarmActive == 0)){
 		GPIOC->BSRR |= (1<<6) <<16;
 		pulseWidth = 500;
 		TIM5->CNT = 0;
 		prevMotorEnable = 1;
 		rpmActSetPulse = ((rpmSetPulse - minimumMotorFreq) / 3) + minimumMotorFreq;
 	}
-	else if((motorEnable == 0) && (prevMotorEnable == 1)){
+	else if(((motorEnable == 0) || (AlarmActive == 1)) && (prevMotorEnable == 1)){
 		GPIOC->BSRR |= (1<<6);
+		motorEnable = 0;
 		prevMotorEnable = 0;
 		lowPulseState = 0;
 		highPulseState = 0;
@@ -1085,7 +1102,7 @@ void analogShifter(void){
 
 void dataSelector(void){
 	if(uartEnable == 0){ // get analog values
-		// motorEnable == digital input
+		motorEnable = (GPIOB->IDR &(1 << 14));
 		delaySetpoint = ((1000.0 / 4096.0) * (float) pulseDelayAvg);
 		if(pidEnable == 0){
 			widthSetpoint = ((1000.0 / 4096.0) * (float) pulseWidthAvg);
@@ -1283,6 +1300,8 @@ void rxDataProcessing(){
 				break;	
 			case 0x83: // max current
 				break;		
+			case 0x99: // reset alarm
+				break;
 		}
 	
 	}
@@ -1747,6 +1766,15 @@ void rxDataProcessing(){
 				Tx_data[6]= 0x11;
 				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;		
+			
+			case 0x91: // AlarmActive
+				break;		
+			case 0x92: // Over Temperature
+				break;	
+			case 0x93: // Over Voltage
+				break;	
+			case 0x94: // Over Current
 				break;		
 		}
 	}
