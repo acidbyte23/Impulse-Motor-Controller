@@ -1054,30 +1054,32 @@ void analogShifter(void){
 		tempAvg = tempAvgCalc / TEMP_SHIFT;
 	}
 	
-	// reset delay average
-	pulseDelayAvgCalc = 0;
+	if(uartEnable == 0){
+		// reset delay average
+		pulseDelayAvgCalc = 0;
 			
-	// add all delay registers
-	for(int i = 0; i < (DELAY_SHIFT); i++){
-		pulseDelayAvgCalc += analogShift[i][2];
-	}
+		// add all delay registers
+		for(int i = 0; i < (DELAY_SHIFT); i++){
+			pulseDelayAvgCalc += analogShift[i][2];
+		}
 						
-	// divide by the registers	
-	if(pulseDelayAvgCalc > 0){
-		pulseDelayAvg = pulseDelayAvgCalc / DELAY_SHIFT;
-	}
+		// divide by the registers	
+		if(pulseDelayAvgCalc > 0){
+			pulseDelayAvg = pulseDelayAvgCalc / DELAY_SHIFT;
+		}
 		
-	// reset width average
-	pulseWidthAvgCalc = 0;
+		// reset width average
+		pulseWidthAvgCalc = 0;
 			
-	// add all width registers
-	for(int i = 0; i < (WIDTH_SHIFT); i++){
-		pulseWidthAvgCalc += analogShift[i][3];
-	}
+		// add all width registers
+		for(int i = 0; i < (WIDTH_SHIFT); i++){
+			pulseWidthAvgCalc += analogShift[i][3];
+		}
 			
-	// divide by the registers		
-	if(pulseWidthAvgCalc > 0){
-		pulseWidthAvg = pulseWidthAvgCalc / WIDTH_SHIFT;
+		// divide by the registers		
+		if(pulseWidthAvgCalc > 0){
+			pulseWidthAvg = pulseWidthAvgCalc / WIDTH_SHIFT;
+		}
 	}
 }
 
@@ -1085,8 +1087,13 @@ void dataSelector(void){
 	if(uartEnable == 0){ // get analog values
 		// motorEnable == digital input
 		delaySetpoint = ((1000.0 / 4096.0) * (float) pulseDelayAvg);
-		widthSetpoint = ((1000.0 / 4096.0) * (float) pulseWidthAvg);
-		rpmSetPulse = ((maxRpmSetpoint / 4096.0) * (float) pulseWidthAvg);
+		if(pidEnable == 0){
+			widthSetpoint = ((1000.0 / 4096.0) * (float) pulseWidthAvg);
+		}
+		else{
+			rpmSetPulse = ((maxRpmSetpoint / 4096.0) * (float) pulseWidthAvg);
+			widthSetpoint = PID_MAX;
+		}
 	}
 	else if(uartEnable == 1){ // get uart values
 		motorEnable = serialMotorEnable;
@@ -1180,6 +1187,21 @@ void rxDataProcessing(){
 				Tx_data[5]=(cycleBufferEnable);
 				Tx_data[6]=0x11;
 				Tx_data[7]=0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x39: // uni pole pass	
+				//Send motor data over uart
+				tempConv = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
+				uniPolePass = (float)tempConv / 10000.0;
+				Tx_data[0]= 0x80;
+				Tx_data[1]= 0x39;
+				Tx_data[2]= (tempConv >> 24);
+				Tx_data[3]= (tempConv >> 16);
+				Tx_data[4]= (tempConv >> 8);
+				Tx_data[5]= (tempConv);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 			
@@ -1449,6 +1471,20 @@ void rxDataProcessing(){
 				Tx_data[3]= (pulseDelay >> 16);
 				Tx_data[4]= (pulseDelay >> 8);
 				Tx_data[5]= (pulseDelay);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0x39: // unipole pass
+				//Send motor data over uart
+				tempConv = (uint32_t)(uniPolePass * 100000.0);
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0x39;
+				Tx_data[2]= (tempConv >> 24);
+				Tx_data[3]= (tempConv >> 16);
+				Tx_data[4]= (tempConv >> 8);
+				Tx_data[5]= (tempConv);
 				Tx_data[6]= 0x11;
 				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
