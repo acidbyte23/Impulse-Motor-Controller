@@ -53,5 +53,14 @@
 92 // Over Temperature
 93 // Over Voltage
 94 // Over Current
+99 // resetAlarm
 
+A0 // buffer shifts
+A1 // Voltage Shift
+A2 // Current Shift
+A3 // Temperature Shift
+A4 // Delay Shift
+A5 // Width Shift
+A6 // Rpm Shift
+A7 // Cycletime Shift
 

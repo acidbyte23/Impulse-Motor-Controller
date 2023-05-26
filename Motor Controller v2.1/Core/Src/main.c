@@ -46,6 +46,7 @@
 ADC_HandleTypeDef hadc3;
 DMA_HandleTypeDef hdma_adc3;
 
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
@@ -55,6 +56,7 @@ UART_HandleTypeDef huart5;
 /* USER CODE BEGIN PV */
 
 //Analog input var's
+int analogDataComplete;
 uint32_t analogInputs[4];
 uint32_t pulseDelayAvg;
 uint32_t pulseWidthAvg;
@@ -101,9 +103,9 @@ const float tempMultiplier = 1;//(maxTemperature / 4096.0);
 float motorVoltage;
 float motorCurrent;
 float motorTemperature;		
-float temperatureThreshold;
-float voltageThreshold;
-float currentThreshold;
+float temperatureThreshold = 4000.0;
+float voltageThreshold = 4000.0;
+float currentThreshold = 4000.0;
 
 //Motor parameters
 float uniPolePass = 3.0;
@@ -192,6 +194,8 @@ float serialRpmSetpoint;
 
 //Alarm var's
 int AlarmActive;
+int alarmCycle;
+int fault[11];
 
 
 /* USER CODE END PV */
@@ -205,6 +209,7 @@ static void MX_TIM4_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_ADC3_Init(void);
 static void MX_UART5_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
 static void alarmProcess(void);
@@ -261,9 +266,11 @@ int main(void)
   MX_TIM5_Init();
   MX_ADC3_Init();
   MX_UART5_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 	// start the time
 	HAL_TIM_Base_Start(&htim5);
+	HAL_TIM_Base_Start_IT(&htim1);
 	
 	// set enable output low
 	GPIOC->BSRR |= (1<<6);
@@ -290,8 +297,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		// handle alarms
-		alarmProcess();
+		if(alarmCycle == 1){
+			// handle alarms
+			alarmProcess();
+			
+			// reset cycle bit
+			alarmCycle = 0;
+		}
 		
 		// handle the motor enable/disable function
 		motorEnableSafe();
@@ -322,15 +334,20 @@ int main(void)
 				RPMmotorRamp();
 			}
 		}
+	
+		if(analogDataComplete == 1){
+			// get and shift analog inputs
+			analogShifter();
 		
-		// get and shift analog inputs
-		analogShifter();
+			// do power calculations
+			powerCalculations();
+			
+			//reset analog bit
+			analogDataComplete = 0;
+		}
 		
 		// use dataselector to get the correct setpoints
 		dataSelector();
-		
-		// do power calculations
-		powerCalculations();
 		
 		// do motor RPM calculations and motor run parameters
 		motorCalculations();
@@ -478,8 +495,54 @@ static void MX_ADC3_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC3_Init 2 */
-	HAL_ADC_Start_DMA(&hadc3, analogInputs, 5);
+	HAL_ADC_Start_DMA(&hadc3, analogInputs, 4);
   /* USER CODE END ADC3_Init 2 */
+
+}
+
+/**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 1800-1;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 10000;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
 
 }
 
@@ -740,18 +803,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : resetAlarm_Pin motorEnable_Pin */
+  GPIO_InitStruct.Pin = resetAlarm_Pin|motorEnable_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /*Configure GPIO pin : AlarmActive_Pin */
   GPIO_InitStruct.Pin = AlarmActive_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(AlarmActive_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : motorEnable_Pin */
-  GPIO_InitStruct.Pin = motorEnable_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(motorEnable_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : motorEnableOut_Pin */
   GPIO_InitStruct.Pin = motorEnableOut_Pin;
@@ -773,6 +836,7 @@ static void MX_GPIO_Init(void)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
 	//Do something while the analog conversion has finished??
+	analogDataComplete = 1;
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
@@ -787,6 +851,36 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 void alarmProcess(void){
 	// TODO
 	// check alarm states
+	
+	// Fault #0 Over Voltage
+	if(voltageAvg > voltageThreshold){
+		fault[0] = 1;
+	}
+	else{
+		fault[0] = 0;
+	}
+	
+	// Fault #1 Over Current
+	if(currentAvg > currentThreshold){
+		fault[1] = 1;
+	}
+	else{
+		fault[1] = 0;
+	}
+	
+	// Fault #2 Over Temperature
+	if(tempAvg > temperatureThreshold){
+		fault[2] = 1;
+	}
+	else{
+		fault[2] = 0;
+	}
+	
+	for(int i = 0; i < 10; i++){
+		if(fault[i] == 1){
+			AlarmActive = 1;
+		}
+	}
 	
 	// Set alarm output
 	if(AlarmActive == 1){
@@ -862,18 +956,22 @@ void RPMmotorRamp(void){
 	if((rpmSetPulse != rpmSetPulsePrev)){
 		rpmSetPulsePrev = rpmSetPulse;
 		motorAtSpeed = 0;
+		
+		if(rpmPulseAttackTime < 100.0){
+			rpmPulseAttackTime = 100.0;
+		}
 			
 		// calculate new incremental
 		if(rpmSetPulse > rpmActSetPulse){
-			rpmPulseIncremental = (rpmSetPulse - rpmActSetPulse) / rpmPulseAttackTime;
+			rpmPulseIncremental = (rpmSetPulse - rpmActSetPulse) / (rpmPulseAttackTime / 100.0);
 		}
 		else if(rpmSetPulse < rpmActSetPulse){
-			rpmPulseIncremental = (rpmActSetPulse - rpmSetPulse) / rpmPulseAttackTime;
+			rpmPulseIncremental = (rpmActSetPulse - rpmSetPulse) / (rpmPulseAttackTime / 100.0);
 		}
 	}
 		
 	// do the actual rampup to the setpoint
-	if((TIM5->CNT >= 10) && (incrementalPulseDone == 0)){
+	if((incrementalPulseDone == 0)){
 		incrementalPulseDone = 1; // set the done bit for one pulse mode
 		// ramp up/down for the rpm setpoint
 		if((rpmSetPulse > (rpmActSetPulse * 1.01)) && (motorAtSpeed == 0)){
@@ -1027,6 +1125,12 @@ void rpmShifter(void){
 }
 
 void analogShifter(void){
+	// Fill the array with value
+	analogShift[0][0] = analogInputs[0];
+	analogShift[0][1] = analogInputs[1];
+	analogShift[0][2] = analogInputs[2];
+	analogShift[0][3] = analogInputs[3];
+	
 	// shift analog input array
 	for(int i = (SHIFT_ARRAY - 1);i >= 0;i--){
 		for(int ii = 0;ii <= 5;ii++){

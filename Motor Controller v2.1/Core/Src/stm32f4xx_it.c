@@ -55,6 +55,7 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc3;
+extern TIM_HandleTypeDef htim1;
 extern UART_HandleTypeDef huart5;
 /* USER CODE BEGIN EV */
 
@@ -70,6 +71,8 @@ extern uint32_t pulseDelay;
 extern uint32_t pulseWidth;
 extern int motorRunning;
 extern int motorEnable;
+extern int incrementalPulseDone;
+extern int alarmCycle;
 
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
@@ -267,6 +270,23 @@ void EXTI1_IRQHandler(void)
   /* USER CODE BEGIN EXTI1_IRQn 1 */
 
   /* USER CODE END EXTI1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM1 update interrupt and TIM10 global interrupt.
+  */
+void TIM1_UP_TIM10_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
+
+	incrementalPulseDone = 0; // set the done bit for one pulse mode
+	alarmCycle = 1;
+	
+  /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim1);
+  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 1 */
+
+  /* USER CODE END TIM1_UP_TIM10_IRQn 1 */
 }
 
 /**
