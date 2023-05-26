@@ -70,14 +70,14 @@ int CYCLETIME_SHIFT = 5;
 
 //Shift registers var's
 uint32_t analogShift[SHIFT_ARRAY][5];
-float rpmShift[SHIFT_ARRAY];
-float cycleShift[SHIFT_ARRAY][2];
 uint32_t voltageAvgCalc;
 uint32_t currentAvgCalc;
 uint32_t tempAvgCalc;
 uint32_t pulseDelayAvgCalc;
 uint32_t pulseWidthAvgCalc;
 uint32_t pulseWidthAvgCalc;
+float rpmShift[SHIFT_ARRAY];
+float cycleShift[SHIFT_ARRAY][2];
 float rpmAvgCalc;
 
 //Voltage reading parameters
@@ -123,20 +123,20 @@ uint32_t pulseDelay = 0;
 uint32_t pulseWidth = 500;
 
 //Motor pulse var's
+int highPulseState;
+int lowPulseState;
 uint32_t cycleTimeRaw;
 uint32_t halfTimeRaw;
 uint32_t cycleTime;
 uint32_t halfTime;
 uint32_t cycleAvgCalc;
 uint32_t halfCycleAvgCalc;
-int highPulseState;
-int lowPulseState;
-float rpmPulse;
-float hertzPulse;
 uint32_t voltageAvg;
 uint32_t currentAvg;
 uint32_t tempAvg;
 float rpmAvg;
+float rpmPulse;
+float hertzPulse;
 
 //Motor state var's
 int prevMotorEnable;
@@ -148,10 +148,10 @@ int motorAtSpeed;
 float rpmPulseAttackTime = 100;
 
 //Motor ramp up/down var's
+int incrementalPulseDone;
 float rpmActSetPulse;
 float rpmSetPulsePrev;
 float rpmPulseIncremental;
-int incrementalPulseDone;
 
 //Motor startup parameters
 uint32_t startupSetpoint = 1000000;
@@ -159,8 +159,8 @@ uint32_t startupFrequencyDecr = 1000;
 float minimumMotorFreq = 6.0;
 
 //Motor startup var's
-uint32_t startupFrequency;
 int motorStartupState;
+uint32_t startupFrequency;
 
 //PID calculation parameters
 float kp = 7.5;
@@ -178,14 +178,14 @@ float lastError;
 float multiplierPid;
 
 //UART var's
+int rxDataAvailable;
 uint8_t Rx_data[16];
 uint8_t Tx_data[8];
-int rxDataAvailable;
 
 //UART bus setable
-uint32_t tempConv;
 int serialMotorEnable;
 int serialResetAlarm;
+uint32_t tempConv;
 uint32_t serialDelaySetpoint;
 uint32_t serialWidthSetpoint;
 float serialRpmSetpoint;
