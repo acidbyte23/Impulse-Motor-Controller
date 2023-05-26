@@ -185,6 +185,7 @@ int rxDataAvailable;
 //UART bus setable
 uint32_t tempConv;
 int serialMotorEnable;
+int serialResetAlarm;
 uint32_t serialDelaySetpoint;
 uint32_t serialWidthSetpoint;
 float serialRpmSetpoint;
@@ -796,8 +797,9 @@ void alarmProcess(void){
 	}
 	
  // reset alarm
-	if(!(GPIOB->IDR &(1 << 12))){
+	if((!(GPIOB->IDR &(1 << 12))) || (serialResetAlarm == 1)){
 		AlarmActive = 0;
+		serialResetAlarm = 0;
 	}
 }
 
@@ -1123,7 +1125,7 @@ void dataSelector(void){
 void powerCalculations(void){
 	motorVoltage = voltageAvg * voltageMultiplier;
 	motorCurrent = currentAvg * currentMultiplier;
-	motorTemperature = tempAvg * tempMultiplier;
+	motorTemperature = tempAvg * tempMultiplier; // TODO temp sensor scale
 }
 
 void motorCalculations(void){
@@ -1159,12 +1161,12 @@ void rxDataProcessing(){
 				motorEnable = Rx_data[(start + 5)]; // 0=analog 1=busvalue
 				Tx_data[0]= 0x80;
 				Tx_data[1]= 0x11;
-				Tx_data[2]=0x00;
-				Tx_data[3]=0x00;
-				Tx_data[4]=0x00;
-				Tx_data[5]=(motorEnable);
-				Tx_data[6]=0x11;
-				Tx_data[7]=0x12;
+				Tx_data[2]= 0x00;
+				Tx_data[3]= 0x00;
+				Tx_data[4]= 0x00;
+				Tx_data[5]= (motorEnable);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 			
@@ -1172,12 +1174,12 @@ void rxDataProcessing(){
 				pidEnable = Rx_data[(start + 5)]; // 0=analog 1=busvalue
 				Tx_data[0]= 0x80;
 				Tx_data[1]= 0x12;
-				Tx_data[2]=0x00;
-				Tx_data[3]=0x00;
-				Tx_data[4]=0x00;
-				Tx_data[5]=(pidEnable);
-				Tx_data[6]=0x11;
-				Tx_data[7]=0x12;
+				Tx_data[2]= 0x00;
+				Tx_data[3]= 0x00;
+				Tx_data[4]= 0x00;
+				Tx_data[5]= (pidEnable);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 			
@@ -1185,12 +1187,12 @@ void rxDataProcessing(){
 				uartEnable = Rx_data[(start + 5)]; // 0=analog 1=busvalue
 				Tx_data[0]= 0x80;
 				Tx_data[1]= 0x13;
-				Tx_data[2]=0x00;
-				Tx_data[3]=0x00;
-				Tx_data[4]=0x00;
-				Tx_data[5]=(uartEnable);
-				Tx_data[6]=0x11;
-				Tx_data[7]=0x12;
+				Tx_data[2]= 0x00;
+				Tx_data[3]= 0x00;
+				Tx_data[4]= 0x00;
+				Tx_data[5]= (uartEnable);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 			
@@ -1198,12 +1200,12 @@ void rxDataProcessing(){
 				cycleBufferEnable = Rx_data[(start + 5)]; // 0=analog 1=busvalue
 				Tx_data[0]= 0x80;
 				Tx_data[1]= 0x14;
-				Tx_data[2]=0x00;
-				Tx_data[3]=0x00;
-				Tx_data[4]=0x00;
-				Tx_data[5]=(cycleBufferEnable);
-				Tx_data[6]=0x11;
-				Tx_data[7]=0x12;
+				Tx_data[2]= 0x00;
+				Tx_data[3]= 0x00;
+				Tx_data[4]= 0x00;
+				Tx_data[5]= (cycleBufferEnable);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 			
@@ -1226,12 +1228,12 @@ void rxDataProcessing(){
 				serialDelaySetpoint = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
 				Tx_data[0]= 0x80;
 				Tx_data[1]= 0x41;
-				Tx_data[2]=(serialDelaySetpoint >> 24);
-				Tx_data[3]=(serialDelaySetpoint >> 16);
-				Tx_data[4]=(serialDelaySetpoint >> 8);
-				Tx_data[5]=(serialDelaySetpoint);
-				Tx_data[6]=0x11;
-				Tx_data[7]=0x12;
+				Tx_data[2]= (serialDelaySetpoint >> 24);
+				Tx_data[3]= (serialDelaySetpoint >> 16);
+				Tx_data[4]= (serialDelaySetpoint >> 8);
+				Tx_data[5]= (serialDelaySetpoint);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 			
@@ -1239,12 +1241,12 @@ void rxDataProcessing(){
 				serialWidthSetpoint = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
 				Tx_data[0]= 0x80;
 				Tx_data[1]= 0x42;
-				Tx_data[2]=(serialWidthSetpoint >> 24);
-				Tx_data[3]=(serialWidthSetpoint >> 16);
-				Tx_data[4]=(serialWidthSetpoint >> 8);
-				Tx_data[5]=(serialWidthSetpoint);
-				Tx_data[6]=0x11;
-				Tx_data[7]=0x12;
+				Tx_data[2]= (serialWidthSetpoint >> 24);
+				Tx_data[3]= (serialWidthSetpoint >> 16);
+				Tx_data[4]= (serialWidthSetpoint >> 8);
+				Tx_data[5]= (serialWidthSetpoint);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 			
@@ -1253,12 +1255,12 @@ void rxDataProcessing(){
 				serialRpmSetpoint = (float)tempConv / 10000.0;
 				Tx_data[0]= 0x80;
 				Tx_data[1]= 0x43;
-				Tx_data[2]=(tempConv >> 24);
-				Tx_data[3]=(tempConv >> 16);
-				Tx_data[4]=(tempConv >> 8);
-				Tx_data[5]=(tempConv);
-				Tx_data[6]=0x11;
-				Tx_data[7]=0x12;
+				Tx_data[2]= (tempConv >> 24);
+				Tx_data[3]= (tempConv >> 16);
+				Tx_data[4]= (tempConv >> 8);
+				Tx_data[5]= (tempConv);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 			
@@ -1275,12 +1277,12 @@ void rxDataProcessing(){
 				pidAvgInput = Rx_data[(start + 5)]; // 0=analog 1=busvalue
 				Tx_data[0]= 0x80;
 				Tx_data[1]= 0x71;
-				Tx_data[2]=0x00;
-				Tx_data[3]=0x00;
-				Tx_data[4]=0x00;
-				Tx_data[5]=(pidAvgInput);
-				Tx_data[6]=0x11;
-				Tx_data[7]=0x12;
+				Tx_data[2]= 0x00;
+				Tx_data[3]= 0x00;
+				Tx_data[4]= 0x00;
+				Tx_data[5]= (pidAvgInput);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
 				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 			
@@ -1300,13 +1302,129 @@ void rxDataProcessing(){
 				break;	
 			case 0x83: // max current
 				break;		
+			
 			case 0x99: // reset alarm
+				serialResetAlarm = Rx_data[(start + 5)]; // 0=analog 1=busvalue
+				Tx_data[0]= 0x80;
+				Tx_data[1]= 0x99;
+				Tx_data[2]= 0x00;
+				Tx_data[3]= 0x00;
+				Tx_data[4]= 0x00;
+				Tx_data[5]= (serialResetAlarm);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA1: // Voltage Shift
+				//Send motor data over uart
+				tempConv = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
+				VOLTAGE_SHIFT = tempConv;
+				Tx_data[0]= 0x80;
+				Tx_data[1]= 0xA1;
+				Tx_data[2]= (VOLTAGE_SHIFT >> 24);
+				Tx_data[3]= (VOLTAGE_SHIFT >> 16);
+				Tx_data[4]= (VOLTAGE_SHIFT >> 8);
+				Tx_data[5]= (VOLTAGE_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA2: // Current Shift
+				//Send motor data over uart
+				tempConv = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
+				CURRENT_SHIFT = tempConv;
+				Tx_data[0]= 0x80;
+				Tx_data[1]= 0xA2;
+				Tx_data[2]= (CURRENT_SHIFT >> 24);
+				Tx_data[3]= (CURRENT_SHIFT >> 16);
+				Tx_data[4]= (CURRENT_SHIFT >> 8);
+				Tx_data[5]= (CURRENT_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA3: // Temperature Shift
+				//Send motor data over uart
+				tempConv = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
+				TEMP_SHIFT = tempConv;
+				Tx_data[0]= 0x80;
+				Tx_data[1]= 0xA3;
+				Tx_data[2]= (TEMP_SHIFT >> 24);
+				Tx_data[3]= (TEMP_SHIFT >> 16);
+				Tx_data[4]= (TEMP_SHIFT >> 8);
+				Tx_data[5]= (TEMP_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA4: // Delay Shift
+				//Send motor data over uart
+				tempConv = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
+				DELAY_SHIFT = tempConv;
+				Tx_data[0]= 0x80;
+				Tx_data[1]= 0xA4;
+				Tx_data[2]= (DELAY_SHIFT >> 24);
+				Tx_data[3]= (DELAY_SHIFT >> 16);
+				Tx_data[4]= (DELAY_SHIFT >> 8);
+				Tx_data[5]= (DELAY_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA5: // Width Shift
+				//Send motor data over uart
+				tempConv = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
+				WIDTH_SHIFT = tempConv;
+				Tx_data[0]= 0x80;
+				Tx_data[1]= 0xA5;
+				Tx_data[2]= (WIDTH_SHIFT >> 24);
+				Tx_data[3]= (WIDTH_SHIFT >> 16);
+				Tx_data[4]= (WIDTH_SHIFT >> 8);
+				Tx_data[5]= (WIDTH_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA6: // Rpm Shift
+				//Send motor data over uart
+				tempConv = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
+				RPM_SHIFT = tempConv;
+				Tx_data[0]= 0x80;
+				Tx_data[1]= 0xA6;
+				Tx_data[2]= (RPM_SHIFT >> 24);
+				Tx_data[3]= (RPM_SHIFT >> 16);
+				Tx_data[4]= (RPM_SHIFT >> 8);
+				Tx_data[5]= (RPM_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA7: // Cycletime Shift
+				//Send motor data over uart
+				tempConv = (Rx_data[(start + 2)] << 24) | (Rx_data[(start + 3)] << 16) | (Rx_data[(start + 4)] << 8) | (Rx_data[(start + 5)]);
+				CYCLETIME_SHIFT = tempConv;
+				Tx_data[0]= 0x80;
+				Tx_data[1]= 0xA7;
+				Tx_data[2]= (CYCLETIME_SHIFT >> 24);
+				Tx_data[3]= (CYCLETIME_SHIFT >> 16);
+				Tx_data[4]= (CYCLETIME_SHIFT >> 8);
+				Tx_data[5]= (CYCLETIME_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
 				break;
 		}
 	
 	}
 	// if the uart command was a register read action
-	else if((Rx_data[start] == 0x70) && (start < 9)){
+	else if((Rx_data[start] == 0x70)){
 		switch(Rx_data[(start + 1)]){
 			
 			case 0x11: // motor enable
@@ -1776,6 +1894,98 @@ void rxDataProcessing(){
 				break;	
 			case 0x94: // Over Current
 				break;		
+			
+			case 0xA1: // Voltage Shift
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0xA1;
+				Tx_data[2]= (VOLTAGE_SHIFT >> 24);
+				Tx_data[3]= (VOLTAGE_SHIFT >> 16);
+				Tx_data[4]= (VOLTAGE_SHIFT >> 8);
+				Tx_data[5]= (VOLTAGE_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA2: // Current Shift
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0xA2;
+				Tx_data[2]= (CURRENT_SHIFT >> 24);
+				Tx_data[3]= (CURRENT_SHIFT >> 16);
+				Tx_data[4]= (CURRENT_SHIFT >> 8);
+				Tx_data[5]= (CURRENT_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA3: // Temperature Shift
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0xA3;
+				Tx_data[2]= (TEMP_SHIFT >> 24);
+				Tx_data[3]= (TEMP_SHIFT >> 16);
+				Tx_data[4]= (TEMP_SHIFT >> 8);
+				Tx_data[5]= (TEMP_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA4: // Delay Shift
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0xA4;
+				Tx_data[2]= (DELAY_SHIFT >> 24);
+				Tx_data[3]= (DELAY_SHIFT >> 16);
+				Tx_data[4]= (DELAY_SHIFT >> 8);
+				Tx_data[5]= (DELAY_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA5: // Width Shift
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0xA5;
+				Tx_data[2]= (WIDTH_SHIFT >> 24);
+				Tx_data[3]= (WIDTH_SHIFT >> 16);
+				Tx_data[4]= (WIDTH_SHIFT >> 8);
+				Tx_data[5]= (WIDTH_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA6: // Rpm Shift
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0xA6;
+				Tx_data[2]= (RPM_SHIFT >> 24);
+				Tx_data[3]= (RPM_SHIFT >> 16);
+				Tx_data[4]= (RPM_SHIFT >> 8);
+				Tx_data[5]= (RPM_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+			
+			case 0xA7: // Cycletime Shift
+				//Send motor data over uart
+				Tx_data[0]= 0x70;
+				Tx_data[1]= 0xA7;
+				Tx_data[2]= (CYCLETIME_SHIFT >> 24);
+				Tx_data[3]= (CYCLETIME_SHIFT >> 16);
+				Tx_data[4]= (CYCLETIME_SHIFT >> 8);
+				Tx_data[5]= (CYCLETIME_SHIFT);
+				Tx_data[6]= 0x11;
+				Tx_data[7]= 0x12;
+				HAL_UART_Transmit(&huart5,Tx_data,sizeof(Tx_data),10);
+				break;
+
 		}
 	}
 	

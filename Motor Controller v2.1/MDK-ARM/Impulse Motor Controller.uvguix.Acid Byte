@@ -3615,9 +3615,9 @@
       </Doc>
       <Doc>
         <Name>../Core/Src/main.c</Name>
-        <ColumnNumber>23</ColumnNumber>
-        <TopLine>196</TopLine>
-        <CurrentLine>304</CurrentLine>
+        <ColumnNumber>17</ColumnNumber>
+        <TopLine>139</TopLine>
+        <CurrentLine>167</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>
         <PaneID>0</PaneID>
