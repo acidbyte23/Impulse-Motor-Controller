@@ -52,9 +52,12 @@ UART_HandleTypeDef huart5;
 
 /* USER CODE BEGIN PV */
 
+//Analog input parameters
+const int ANALOG_INPUTS = 5;
+
 //Analog input var's
 int analogDataComplete;
-uint32_t analogInputs[4];
+uint32_t analogInputs[ANALOG_INPUTS];
 uint32_t pulseDelayAvg;
 uint32_t pulseWidthAvg;
 
@@ -68,7 +71,8 @@ int RPM_SHIFT = 10;
 int CYCLETIME_SHIFT = 5;
 
 //Shift registers var's
-uint32_t analogShift[SHIFT_ARRAY][5];
+int shifterCycle;
+uint32_t analogShift[ANALOG_INPUTS][SHIFT_ARRAY];
 uint32_t voltageAvgCalc;
 uint32_t currentAvgCalc;
 uint32_t tempAvgCalc;
@@ -76,12 +80,12 @@ uint32_t pulseDelayAvgCalc;
 uint32_t pulseWidthAvgCalc;
 uint32_t pulseWidthAvgCalc;
 float rpmShift[SHIFT_ARRAY];
-float cycleShift[SHIFT_ARRAY][2];
+float cycleShift[2][SHIFT_ARRAY];
 float rpmAvgCalc;
 
 //Voltage reading parameters
-const float R1 = 29290.0;
-const float R2 = 1000.0;
+const float R1 = 66500.0;
+const float R2 = 3300.0;
 
 //Voltage reading var's
 const float maxVoltage = (3.3 * ((R1 + R2) / R2));
@@ -269,6 +273,9 @@ int main(void)
 	HAL_TIM_Base_Start(&htim5);
 	HAL_TIM_Base_Start_IT(&htim1);
 	
+	// start the DMA
+	HAL_ADC_Start_DMA(&hadc3, analogInputs, ANALOG_INPUTS);
+	
 	// set enable output low
 	GPIOC->BSRR |= (1<<6);
 	prevMotorEnable = 0;
@@ -297,8 +304,7 @@ int main(void)
 		if(alarmCycle == 1){
 			// handle alarms
 			alarmProcess();
-			
-			// reset cycle bit
+			//reset alarm bit
 			alarmCycle = 0;
 		}
 		
@@ -312,21 +318,21 @@ int main(void)
 		
 		// check if the motor is enabled
 		if(motorEnable == 1){	
-			
 			// check if the motor needs a cold start
 			if(motorRunning == 0){
 				// handle motor cold start
 				motorStartup();
 			}
+			if(shifterCycle == 1){
+				// handle stable rpm feedback
+				rpmShifter();
+				shifterCycle = 0;
+			}
 				
-			// handle stable rpm feedback
-			rpmShifter();
-			
 			// check if pid is enabled
 			if((pidEnable == 1) && (motorRunning == 1)){
 				// do PID calculations
 				PIDcalculations();
-							
 				// ramp the motor rpm setpoint
 				RPMmotorRamp();
 			}
@@ -335,20 +341,16 @@ int main(void)
 		if(analogDataComplete == 1){
 			// get and shift analog inputs
 			analogShifter();
-		
 			// do power calculations
 			powerCalculations();
-			
 			//reset analog bit
 			analogDataComplete = 0;
 		}
 		
 		// use dataselector to get the correct setpoints
-		dataSelector();
-		
+		dataSelector();		
 		// do motor RPM calculations and motor run parameters
 		motorCalculations();
-			
 		// determine and control motor state
 		motorRunningState();
 	}
@@ -439,7 +441,7 @@ static void MX_ADC3_Init(void)
   hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc3.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc3.Init.NbrOfConversion = 5;
-  hadc3.Init.DMAContinuousRequests = DISABLE;
+  hadc3.Init.DMAContinuousRequests = ENABLE;
   hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc3) != HAL_OK)
   {
@@ -492,7 +494,8 @@ static void MX_ADC3_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC3_Init 2 */
-	HAL_ADC_Start_DMA(&hadc3, analogInputs, 4);
+	
+	
   /* USER CODE END ADC3_Init 2 */
 
 }
@@ -1051,29 +1054,23 @@ void motorRunningState(void){
 	else if(motorEnable == 0){
 		startupFrequency = startupSetpoint;
 		motorStartupState = 0;
-		motorRunning = 0;
+		motorRunning = 0;		
+		rpmActSetPulse = 0;
 	}
 	
 	// reset pulse states
 	if(highPulseState == 1){
-		incrementalPulseDone = 0; // reset incremental
 		highPulseState = 0;
 	}
 	if(lowPulseState == 1){
-		incrementalPulseDone = 0; // reset incremental
 		lowPulseState = 0;
-	}
-	
-	// if motor disabled reset ramp setpoint
-	if(motorEnable == 0){
-		rpmActSetPulse = 0;
 	}
 }
 
 void rpmShifter(void){
 	rpmShift[0] = rpmPulse;
 	
-	for(int i = 0; i <= RPM_SHIFT; i++){
+	for(int i = (RPM_SHIFT - 1); i > 0; i--){
 		rpmShift[i] = rpmShift[(i-1)];
 	}
 	// reset rpm average
@@ -1091,11 +1088,11 @@ void rpmShifter(void){
 	
 	if(cycleBufferEnable == 1){
 		cycleShift[0][0] = halfTimeRaw;
-		cycleShift[0][1] = cycleTimeRaw;
+		cycleShift[1][0] = cycleTimeRaw;
 	
-		for(int i = 0; i <= CYCLETIME_SHIFT; i++){
-			cycleShift[i][0] = cycleShift[(i-1)][0];
-			cycleShift[i][1] = cycleShift[(i-1)][1];
+		for(int i = (CYCLETIME_SHIFT - 1); i > 0; i--){
+			cycleShift[0][i] = cycleShift[0][(i-1)];
+			cycleShift[1][i] = cycleShift[1][(i-1)];
 		}
 		// reset rpm average
 		cycleAvgCalc = 0;	
@@ -1103,8 +1100,8 @@ void rpmShifter(void){
 	
 		// add all rpm registers
 		for(int i = 0; i < (CYCLETIME_SHIFT); i++){
-			halfCycleAvgCalc += cycleShift[i][0];
-			cycleAvgCalc += cycleShift[i][1];
+			halfCycleAvgCalc += cycleShift[0][i];
+			cycleAvgCalc += cycleShift[1][i];
 		}
 					
 		// divide by the registers	
@@ -1124,14 +1121,15 @@ void rpmShifter(void){
 void analogShifter(void){
 	// Fill the array with value
 	analogShift[0][0] = analogInputs[0];
-	analogShift[0][1] = analogInputs[1];
-	analogShift[0][2] = analogInputs[2];
-	analogShift[0][3] = analogInputs[3];
+	analogShift[1][0] = analogInputs[1];
+	analogShift[2][0] = analogInputs[2];
+	analogShift[3][0] = analogInputs[3];
+	analogShift[4][0] = analogInputs[4];
 	
 	// shift analog input array
 	for(int i = (SHIFT_ARRAY - 1);i >= 0;i--){
-		for(int ii = 0;ii <= 5;ii++){
-			analogShift[i][ii] = analogShift[(i-1)][ii];
+		for(int ii = 0;ii < ANALOG_INPUTS;ii++){
+			analogShift[ii][i] = analogShift[(ii)][(i-1)];
 		}
 	}
 	
@@ -1140,7 +1138,7 @@ void analogShifter(void){
 			
 	// add all voltage registers
 	for(int i = 0; i < (VOLTAGE_SHIFT); i++){
-		voltageAvgCalc += analogShift[i][0];
+		voltageAvgCalc += analogShift[0][i];
 	}
 					
 	// divide by the registers	
@@ -1153,7 +1151,7 @@ void analogShifter(void){
 			
 	// add all current registers
 	for(int i = 0; i < (CURRENT_SHIFT); i++){
-		currentAvgCalc += analogShift[i][1];
+		currentAvgCalc += analogShift[1][i];
 	}
 					
 	// divide by the registers	
@@ -1166,7 +1164,7 @@ void analogShifter(void){
 			
 	// add all temperature registers
 	for(int i = 0; i < (TEMP_SHIFT); i++){
-		tempAvgCalc += analogShift[i][1];
+		tempAvgCalc += analogShift[4][i];
 	}
 					
 	// divide by the registers	
@@ -1180,7 +1178,7 @@ void analogShifter(void){
 			
 		// add all delay registers
 		for(int i = 0; i < (DELAY_SHIFT); i++){
-			pulseDelayAvgCalc += analogShift[i][2];
+			pulseDelayAvgCalc += analogShift[2][i];
 		}
 						
 		// divide by the registers	
@@ -1193,7 +1191,7 @@ void analogShifter(void){
 			
 		// add all width registers
 		for(int i = 0; i < (WIDTH_SHIFT); i++){
-			pulseWidthAvgCalc += analogShift[i][3];
+			pulseWidthAvgCalc += analogShift[3][i];
 		}
 			
 		// divide by the registers		
@@ -1205,14 +1203,14 @@ void analogShifter(void){
 
 void dataSelector(void){
 	if(uartEnable == 0){ // get analog values
-		motorEnable = (GPIOB->IDR &(1 << 14));
-		delaySetpoint = ((1000.0 / 4096.0) * (float) pulseDelayAvg);
+		//motorEnable = (GPIOB->IDR &(1 << 14));  // TODO
+		//delaySetpoint = ((1000.0 / 4096.0) * (float) pulseDelayAvg); // TODO
 		if(pidEnable == 0){
-			widthSetpoint = ((1000.0 / 4096.0) * (float) pulseWidthAvg);
+			//widthSetpoint = ((1000.0 / 4096.0) * (float) pulseWidthAvg); // TODO
 		}
 		else{
-			rpmSetPulse = ((maxRpmSetpoint / 4096.0) * (float) pulseWidthAvg);
-			widthSetpoint = PID_MAX;
+			//rpmSetPulse = ((maxRpmSetpoint / 4096.0) * (float) pulseWidthAvg); // TODO
+			widthSetpoint = 1000;
 		}
 	}
 	else if(uartEnable == 1){ // get uart values
@@ -1230,11 +1228,19 @@ void powerCalculations(void){
 }
 
 void motorCalculations(void){
-	if(cycleTime > 0){ // catch divide by 0
-		hertzPulse = (1000000.0 / (float) cycleTime); // calculate motor coil hertz
-		rpmPulse = (hertzPulse / uniPolePass)  * 60.0; // calculate rpm
-		pulseDelay = (((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint)); // calculate pulse time delay
-		pulseWidth = (uint32_t) (((((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid); // calculate pulse width
+	if(cycleTimeRaw > 0){ // catch divide by 0
+		if(cycleTime == 0){
+			hertzPulse = (1000000.0 / (float) cycleTimeRaw); // calculate motor coil hertz
+			rpmPulse = (hertzPulse / uniPolePass)  * 60.0; // calculate rpm
+			pulseDelay = (((((float) cycleTimeRaw / 2.0) / 1000.0) * (float) delaySetpoint)); // calculate pulse time delay
+			pulseWidth = (uint32_t) (((((((float) cycleTimeRaw / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid); // calculate pulse width
+		}
+		else{
+			hertzPulse = (1000000.0 / (float) cycleTime); // calculate motor coil hertz
+			rpmPulse = (hertzPulse / uniPolePass)  * 60.0; // calculate rpm
+			pulseDelay = (((((float) cycleTime / 2.0) / 1000.0) * (float) delaySetpoint)); // calculate pulse time delay
+			pulseWidth = (uint32_t) (((((((float) cycleTime / 2.0) / 1000.0) * (float) widthSetpoint) / 2.0) / 1000.0) * (float)multiplierPid); // calculate pulse width
+		}
 			
 		if((pulseWidth + pulseDelay) > 65535){ // catch overflow
 			pulseWidth = 65534 - pulseDelay;

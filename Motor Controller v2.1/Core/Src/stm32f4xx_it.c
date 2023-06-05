@@ -73,6 +73,7 @@ extern int motorRunning;
 extern int motorEnable;
 extern int incrementalPulseDone;
 extern int alarmCycle;
+extern int shifterCycle;
 
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
@@ -227,16 +228,13 @@ void EXTI0_IRQHandler(void)
 	cycleTimeRaw = TIM5->CNT;
 	TIM5->CNT = 0;
 		
-	if(motorRunning == 1){
+	if((motorRunning == 1 && motorEnable == 1)){
 		
 		TIM3->ARR = pulseDelay + pulseWidth + 1; // set pulsewidth
 		TIM3->CCR3 = pulseDelay + 1;
 		__HAL_TIM_ENABLE(&htim3); // enable one shot pwm timer
 	
-		// set pulse flag
-		if((highPulseState == 0) && (pulseCycle == 0)){
-			highPulseState=1;
-		}
+		highPulseState=1;
 	}
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(High_Side_Pole_Pin);
@@ -254,15 +252,12 @@ void EXTI1_IRQHandler(void)
 	// take half time
 	halfTimeRaw = TIM5->CNT;
 	
-	if(motorRunning == 1){
+	if((motorRunning == 1 && motorEnable == 1)){
 		TIM4->ARR = pulseDelay + pulseWidth + 1; // set pulsewidth
 		TIM4->CCR1 = pulseDelay + 1;
 		__HAL_TIM_ENABLE(&htim4); // enable one shot pwm timer
 	
-		// set pulse flag
-		if((lowPulseState == 0) && (pulseCycle == 1)){
 		lowPulseState=1;
-		}
 	}	
 	
   /* USER CODE END EXTI1_IRQn 0 */
@@ -281,6 +276,7 @@ void TIM1_UP_TIM10_IRQHandler(void)
 
 	incrementalPulseDone = 0; // set the done bit for one pulse mode
 	alarmCycle = 1;
+	shifterCycle = 1;
 	
   /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
   HAL_TIM_IRQHandler(&htim1);

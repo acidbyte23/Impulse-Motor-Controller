@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <ProjectOpt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="project_optx.xsd">
 
   <SchemaVersion>1.0</SchemaVersion>
@@ -45,7 +45,7 @@
         <PageWidth>79</PageWidth>
         <PageLength>66</PageLength>
         <TabStop>8</TabStop>
-        <ListingPath />
+        <ListingPath></ListingPath>
       </OPTLEX>
       <ListingPage>
         <CreateCListing>1</CreateCListing>
@@ -104,16 +104,16 @@
         <bSchkAxf>0</bSchkAxf>
         <bTchkAxf>0</bTchkAxf>
         <nTsel>6</nTsel>
-        <sDll />
-        <sDllPa />
-        <sDlgDll />
-        <sDlgPa />
-        <sIfile />
-        <tDll />
-        <tDllPa />
-        <tDlgDll />
-        <tDlgPa />
-        <tIfile />
+        <sDll></sDll>
+        <sDllPa></sDllPa>
+        <sDlgDll></sDlgDll>
+        <sDlgPa></sDlgPa>
+        <sIfile></sIfile>
+        <tDll></tDll>
+        <tDllPa></tDllPa>
+        <tDlgDll></tDlgDll>
+        <tDlgPa></tDlgPa>
+        <tIfile></tIfile>
         <pMon>STLink\ST-LINKIII-KEIL_SWO.dll</pMon>
       </DebugOpt>
       <TargetDriverDllRegistry>
@@ -130,7 +130,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>ARMDBGFLAGS</Key>
-          <Name />
+          <Name></Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -148,7 +148,7 @@
           <Name>-U-O142 -O2254 -SF10000 -C0 -A0 -I0 -HNlocalhost -HP7184 -P1 -N00("ARM CoreSight SW-DP (ARM Core") -D00(2BA01477) -L00(0) -TO131090 -TC10000000 -TT10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_512.FLM -FS08000000 -FL080000 -FP0($$Device:STM32F446RETx$CMSIS\Flash\STM32F4xx_512.FLM)</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint />
+      <Breakpoint/>
       <WatchWindow1>
         <Ww>
           <count>0</count>
@@ -498,7 +498,182 @@
         <Ww>
           <count>69</count>
           <WinNumber>1</WinNumber>
-          <ItemText>\\Impulse_Motor_Controller\../Core/Src/main.c\widthSetpoint</ItemText>
+          <ItemText>\\Impulse_Motor_Controller\../Core/Src/main.c\widthSetpoint,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>70</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>serialResetAlarm</ItemText>
+        </Ww>
+        <Ww>
+          <count>71</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>AlarmActive</ItemText>
+        </Ww>
+        <Ww>
+          <count>72</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>currentThreshold</ItemText>
+        </Ww>
+        <Ww>
+          <count>73</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>temperatureThreshold</ItemText>
+        </Ww>
+        <Ww>
+          <count>74</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>voltageThreshold</ItemText>
+        </Ww>
+        <Ww>
+          <count>75</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>voltageAvg,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>76</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>tempAvg,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>77</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>currentAvg,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>78</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>motorRunning</ItemText>
+        </Ww>
+        <Ww>
+          <count>79</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>voltageAvgCalc,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>80</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>analogShift,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>81</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>motorVoltage,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>82</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>cycleTimeRaw</ItemText>
+        </Ww>
+        <Ww>
+          <count>83</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>cycleShift</ItemText>
+        </Ww>
+        <Ww>
+          <count>84</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>rpmShift</ItemText>
+        </Ww>
+        <Ww>
+          <count>85</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>halfTimeRaw,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>86</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>cycleTimeRaw,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>87</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>pulseCycle,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>88</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>cycleTime,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>89</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>halfTime,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>90</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>motorVoltage</ItemText>
+        </Ww>
+        <Ww>
+          <count>91</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>cycleShift</ItemText>
+        </Ww>
+        <Ww>
+          <count>92</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>rpmShift</ItemText>
+        </Ww>
+        <Ww>
+          <count>93</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>rpmAvg,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>94</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>rpmAvg</ItemText>
+        </Ww>
+        <Ww>
+          <count>95</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>cycleBufferEnable</ItemText>
+        </Ww>
+        <Ww>
+          <count>96</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>rpmPulse</ItemText>
+        </Ww>
+        <Ww>
+          <count>97</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>cycleTime,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>98</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>halfTime,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>99</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>cycleTimeRaw,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>100</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>halfTimeRaw,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>101</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>widthSetpoint,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>102</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>delaySetpoint,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>103</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>CYCLETIME_SHIFT,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>104</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>RPM_SHIFT,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
@@ -538,19 +713,19 @@
         <newCpu>0</newCpu>
         <uProt>0</uProt>
       </DebugFlag>
-      <LintExecutable />
-      <LintConfigFile />
+      <LintExecutable></LintExecutable>
+      <LintConfigFile></LintConfigFile>
       <bLintAuto>0</bLintAuto>
       <bAutoGenD>0</bAutoGenD>
       <LntExFlags>0</LntExFlags>
-      <pMisraName />
-      <pszMrule />
-      <pSingCmds />
-      <pMultCmds />
-      <pMisraNamep />
-      <pszMrulep />
-      <pSingCmdsp />
-      <pMultCmdsp />
+      <pMisraName></pMisraName>
+      <pszMrule></pszMrule>
+      <pSingCmds></pSingCmds>
+      <pMultCmds></pMultCmds>
+      <pMisraNamep></pMisraNamep>
+      <pszMrulep></pszMrulep>
+      <pSingCmdsp></pSingCmdsp>
+      <pMultCmdsp></pMultCmdsp>
       <DebugDescription>
         <Enable>1</Enable>
         <EnableFlashSeq>0</EnableFlashSeq>
@@ -591,7 +766,7 @@
       <GroupNumber>2</GroupNumber>
       <FileNumber>2</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>../Core/Src/main.c</PathWithFileName>
